@@ -1,4 +1,4 @@
-# Spleeg
+# Splegg
 Needed Plugins:
 
 WorldEdit: http://dev.bukkit.org/bukkit-plugins/worldedit/
