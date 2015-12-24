@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.trompgames.utils.Updateable;
@@ -33,13 +34,19 @@ public class SpleggHandler extends Updateable{
 	private Location mid;
 	private int y;
 	
+	private SpleggMap map;
+	private MapVote mapVote;
+	private FileConfiguration config;
+	
 	ArrayList<PlayerData> players = new ArrayList<PlayerData>();
 	
-	public SpleggHandler(Location lobbyLocation, Location mid, int y){
+	public SpleggHandler(Location lobbyLocation, Location mid, int y, FileConfiguration config){
 		super(1);
 		this.lobbyLocation = lobbyLocation;
 		this.mid = mid;
 		this.y = y;
+		this.mapVote = new MapVote(config);
+		this.config = config;
 		handler = this;		
 	}
 
@@ -132,10 +139,14 @@ public class SpleggHandler extends Updateable{
 	public void playerJoin(Player player){
 		player.setSaturation(100000000);
 		players.add(PlayerData.getPlayerData(player));
-		if(gameState.equals(GameState.PREGAME)) player.teleport(lobbyLocation);
-		else if(gameState.equals(GameState.PREGAME)) player.teleport(mid);
-		if(gameState.equals(GameState.PREGAME))
+		if(gameState.equals(GameState.PREGAME)){
+			player.teleport(lobbyLocation);
 			Bukkit.broadcastMessage(ChatColor.GREEN + "➣ " + ChatColor.GOLD + player.getName() + ChatColor.GREEN + " has joined. " + ChatColor.GRAY + "[" + ChatColor.GOLD + players.size() + "/" + maxPlayers + ChatColor.GRAY + "]");
+			mapVote.sendVotingOptions(player);		
+		}
+		
+		else if(gameState.equals(GameState.PREGAME)) player.teleport(mid);
+		
 	}
 	
 	public void playerQuit(Player player){
