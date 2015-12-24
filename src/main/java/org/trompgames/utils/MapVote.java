@@ -1,13 +1,17 @@
 package main.java.org.trompgames.utils;
 
-import java.awt.Color;
 import java.util.ArrayList;
 
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 
 public class MapVote {
@@ -31,27 +35,33 @@ public class MapVote {
 		return mapNames;
 	}
 	
-	public ArrayList<String> getVotingOptions(){
-		ArrayList<String> options = new ArrayList<String>();
-		options.add(ChatColor.GREEN + "To vote click on a map or use /vote #");
+	public ArrayList<TextComponent> getVotingOptions(){
+		ArrayList<TextComponent> options = new ArrayList<TextComponent>();
+		options.add(new TextComponent(ChatColor.GREEN + "To vote click on a map or use /vote #"));
 		int i = 1;
 		for(String map : maps){
+									
+			String s = ChatColor.GRAY + "[" + ChatColor.GOLD + i + ChatColor.GRAY + "]  " + ChatColor.GOLD + map + ChatColor.GRAY + "   |   " + ChatColor.GOLD + votes[i-1] + ChatColor.GREEN + " votes";
 			
+			TextComponent text = new TextComponent(s);
 			
+			ComponentBuilder hoverText = new ComponentBuilder("Click to vote for " + map);
+			hoverText.color(ChatColor.GREEN);
 			
-			String s = ChatColor.GRAY + "[" + ChatColor.GOLD + i + ChatColor.GRAY + "] " + ChatColor.GOLD + map + ChatColor.GRAY + "   |   " + ChatColor.GOLD + votes[i-1] + ChatColor.GREEN + " votes";
-			
-			//ComponentBuilder[] b = TextComponent.fromLegacyText(s);
+			text.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vote " + i));
+			text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText.create()));
+		
+			options.add(text);
 			
 			i++;
 		}
-		options.add(ChatColor.GRAY + "-------------------------");
+		options.add(new TextComponent(ChatColor.GRAY + "-------------------------"));
 		return options;
 	}
 	
 	public void sendVotingOptions(Player player){
-		for(String s : getVotingOptions()){
-			player.sendMessage(s);
+		for(TextComponent s : getVotingOptions()){
+			player.spigot().sendMessage(s);
 		}
 	}
 	

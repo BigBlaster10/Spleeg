@@ -1,8 +1,7 @@
 package main.java.org.trompgames.splegg;
 
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -40,7 +39,7 @@ public class SpleggMain extends JavaPlugin {
         Location lobbyLoc = new Location(world, 173.5, 122, 247.5);
         Location mid = new Location(world, 212.5, 95, 249.5);
 
-        handler = new SpleggHandler(lobbyLoc, mid, 85);
+        handler = new SpleggHandler(lobbyLoc, mid, 85, this.getConfig());
 
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, Updateable::updateUpdateables, 0L, 1L);
 
@@ -83,86 +82,89 @@ public class SpleggMain extends JavaPlugin {
                 }
 
                 handler.startGame();
-
-                //Schematic.loadArea(world, new File("plugins\\WorldEdit\\schematics\\" + schem + ".schematic"), player.getLocation(), true);
-                if (cmd.getName().equalsIgnoreCase("splegg")) {
-                    if(args.length == 0 || (args.length >= 1 && args[0].equals("help"))){
-                        spleggHelp(player);
-                        return false;
-                    }
-
-                    switch(args[0].toLowerCase()){
-
-                        case "maps":
-
-                            String s = ChatColor.GREEN + "Maps: " + ChatColor.GRAY + "[" + ChatColor.GREEN;
-
-
-                            for(int i = 0; i < getMapNames().size(); i++){
-                                String name = getMapNames().get(i);
-                                if(i != getMapNames().size()-1)
-                                    s += name + ", ";
-                                else s += name;
-                            }
-
-                            player.sendMessage(s);
-                            return true;
-
-                        case "setspawn":
-                            if(args.length < 4){
-                                spleggHelp(player);
-                                return false;
-                            }
-
-                            String name = args[1];
-                            double yaw;
-                            double pitch;
-
-                            try{
-                                yaw = Double.parseDouble(args[2]);
-                                pitch = Double.parseDouble(args[3]);
-                            }catch(Exception e){
-                                spleggHelp(player);
-                                return false;
-                            }
-
-                            setSpawn(name, player.getLocation(), yaw, pitch);
-                            player.sendMessage(ChatColor.GREEN + "Set spawn for map " + ChatColor.GOLD + args[1]);
-                            return true;
-
-                        case "create":
-                            if(args.length < 3){
-                                spleggHelp(player);
-                                return false;
-                            }
-                            createMap(args[1], args[2]);
-                            player.sendMessage(ChatColor.GREEN + "Created map " + ChatColor.GOLD + args[1] + ChatColor.GREEN + " with the schematic " + ChatColor.GOLD + args[2]);
-                            player.sendMessage(ChatColor.GREEN + "To finish creating the map use /splegg setSpawn");
-                            return true;
-                        case "remove":
-                            if(args.length < 2){
-                                spleggHelp(player);
-                                return false;
-                            }
-                            boolean removed = removeMap(args[1]);
-                            if(removed){
-                                player.sendMessage(ChatColor.GREEN + "The map " + ChatColor.GOLD + args[1] + ChatColor.GREEN + " has been removed");
-                            }else{
-                                player.sendMessage(ChatColor.DARK_RED + "" +  ChatColor.BOLD + "Error: " + ChatColor.RED + "Couldn't find a map by the name of '" + args[1] + "'");
-                            }
-                    }
-                    return true;
-
-
-
-
-
-                }
-                return true;
             }
-        }
-        return true;
-    }
+                //Schematic.loadArea(world, new File("plugins\\WorldEdit\\schematics\\" + schem + ".schematic"), player.getLocation(), true);
+            if (cmd.getName().equalsIgnoreCase("splegg")) {
+    			if(args.length == 0 || (args.length >= 1 && args[0].equals("help"))){
+    				spleggHelp(player);
+    				return false;
+    			}
+    			
+    			switch(args[0].toLowerCase()){
+    				
+    			case "maps":
+    				
+    				String s = ChatColor.GREEN + "Maps: " + ChatColor.GRAY + "[" + ChatColor.GREEN;
+    				
+    				
+    				for(int i = 0; i < getMapNames().size(); i++){
+    					String name = getMapNames().get(i);
+    					if(i != getMapNames().size()-1)
+    						s += name + ", ";
+    					else s += name;
+    				}
+    				s += ChatColor.GRAY + "]";
+    				player.sendMessage(s);
+    				return true;
+    	
+    			case "setspawn":
+    				if(args.length < 4){
+    					spleggHelp(player);
+    					return false;
+    				}
+    				
+    				String name = args[1];
+    				double yaw;
+    				double pitch;
+    				
+    				try{
+    					yaw = Double.parseDouble(args[2]);
+    					pitch = Double.parseDouble(args[3]);					
+    				}catch(Exception e){
+    					spleggHelp(player);
+    					return false;
+    				}	
+    				
+    				boolean set = setSpawn(name, player.getLocation(), yaw, pitch);
+    				if(set)
+    					player.sendMessage(ChatColor.GREEN + "Set spawn for map " + ChatColor.GOLD + args[1]);
+    				else
+    					player.sendMessage(ChatColor.DARK_RED + "" +  ChatColor.BOLD + "Error: " + ChatColor.RED + "Couldn't find a map by the name of '" + args[1] + "'");
+
+    				return true;
+
+    			case "create":
+    				if(args.length < 3){
+    					spleggHelp(player);
+    					return false;
+    				}
+    				createMap(args[1], args[2]);
+    				player.sendMessage(ChatColor.GREEN + "Created map " + ChatColor.GOLD + args[1] + ChatColor.GREEN + " with the schematic " + ChatColor.GOLD + args[2]);
+    				player.sendMessage(ChatColor.GREEN + "To finish creating the map use /splegg setSpawn");
+    				return true;
+    			case "remove":
+    				if(args.length < 2){
+    					spleggHelp(player);
+    					return false;
+    				}
+    				boolean removed = removeMap(args[1]);
+    				if(removed){
+    					player.sendMessage(ChatColor.GREEN + "The map " + ChatColor.GOLD + args[1] + ChatColor.GREEN + " has been removed");
+    				}else{
+    					player.sendMessage(ChatColor.DARK_RED + "" +  ChatColor.BOLD + "Error: " + ChatColor.RED + "Couldn't find a map by the name of '" + args[1] + "'");
+    				}
+    			}
+    			return true;
+
+    			
+    			
+    			
+    			
+    			}
+    			return true;
+        	}
+			return false;
+    	}
 
     public void spleggHelp(Player player){
         player.sendMessage(ChatColor.GRAY + "------------------------------------------");
@@ -239,9 +241,20 @@ public class SpleggMain extends JavaPlugin {
         return true;
     }
 
+    /*   This doesn't seem to work...
     public List<String> getMapNames(){
         return this.getConfig().getConfigurationSection("map").getKeys(false).stream().collect(Collectors.toList());
     }
+    */
+    
+    public ArrayList<String> getMapNames(){
+		ArrayList<String> mapNames = new ArrayList<String>();
+		for(int i = 0; i < this.getConfig().getConfigurationSection("map").getKeys(false).size(); i++ ){
+			mapNames.add(this.getConfig().getString("map." + i + ".name"));
+		}		
+		return mapNames;
+	}
+
 
     public int getMapId(String name){
         int mapId = -1;

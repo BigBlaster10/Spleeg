@@ -1,5 +1,5 @@
 name: Splegg
-main: org.trompgames.splegg.SpleggMain
+main: main.java.org.trompgames.splegg.SpleggMain
 version: 1.0
 commands:
    start:
