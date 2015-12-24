@@ -1,4 +1,4 @@
-package org.trompgames.splegg;
+package main.java.org.trompgames.utils;
 
 import java.io.File;
 
