@@ -9,6 +9,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -27,12 +28,13 @@ public class SpleggHandler extends Updateable{
 	
 	private GameState gameState = GameState.PREGAME;
 	
-	private final int COUNTDOWNSECONDS = 10;
+	private final int COUNTDOWNSECONDS = 20;
 	private int preGameSeconds = COUNTDOWNSECONDS;
 	
 	private final int INGAMECOUNTDOWN = 5;
 	private int inGameCountdown = INGAMECOUNTDOWN;
 	
+	private World world;
 	private Location lobbyLocation;
 	private Location mid;
 	private int y;
@@ -41,43 +43,55 @@ public class SpleggHandler extends Updateable{
 	private MapVote mapVote;
 	private FileConfiguration config;
 
+	private SpleggMain plugin; 
 	
 	ArrayList<PlayerData> players = new ArrayList<>();
 	
-	protected SpleggHandler(Location lobbyLocation, Location mid, int y, FileConfiguration config){
+	protected SpleggHandler(Location lobbyLocation, Location mid, int y, FileConfiguration config, SpleggMain plugin){
 		super(1);
 		this.lobbyLocation = lobbyLocation;
+		this.world = lobbyLocation.getWorld();
 		this.mid = mid;
 		this.y = y;
 		this.mapVote = new MapVote(config);
 		this.config = config;
+		this.plugin = plugin;
 	}
 
-	int ticks = 0;
+	private int ticks = 0;
 	@Override
 	protected void update() {
 		ticks++;
 		if(gameState.equals(GameState.PREGAME) && ticks == 20) preGameUpdate();
 		else if(gameState.equals(GameState.INGAME) && ticks == 20) inGameUpdate();
-		if(ticks >= 20) ticks = 0;
-		for(PlayerData player : players){
-			if(player.isDead()) continue;
-			if(player.getPlayer().getLocation().getBlockY() <= y) killPlayer(player);
+		if(gameState.equals(GameState.INGAME)){
+			for(PlayerData player : players){
+				if(player.isDead()) continue;
+				if(player.getPlayer().getLocation().getBlockY() <= y) killPlayer(player);
+				this.checkWin();
+			}
 		}
-		
+		if(ticks >= 20) ticks = 0;
 	}
+	
+	public void checkWin(){
+		if(getAllivePlayers().size() == 1){
+			win(getAllivePlayers().get(0));
+		}
+	}
+
 	
 	public void killPlayer(PlayerData data){
 		Player player = data.getPlayer();		
-		player.setGameMode(GameMode.SPECTATOR);
-		Bukkit.broadcastMessage(player.getName() + " Died");
+		player.setGameMode(GameMode.CREATIVE);
+		Bukkit.broadcastMessage(ChatColor.GOLD + player.getName() + ChatColor.GREEN + " Died");
 		data.setDead(true);
 				
 		for(PlayerData p : players){
 			p.getPlayer().hidePlayer(player);
 		}
-		
 	}
+
 	
 	public void preGameUpdate(){
 		if(!(players.size() >= minPlayers)){
@@ -86,6 +100,11 @@ public class SpleggHandler extends Updateable{
 				Bukkit.broadcastMessage(ChatColor.GREEN + "Reseting countdown");
 			}
 			return;		
+		}
+		if(preGameSeconds == 10){
+			map = mapVote.getWinner(world);
+			map.loadMap(plugin, mid);
+			Bukkit.broadcastMessage(ChatColor.GREEN + "The map " + ChatColor.GOLD + map.getMapName() + ChatColor.GREEN + " has been selected!");
 		}
 		if(preGameSeconds == 30 || preGameSeconds <= 10)
 			sendStartingMessage();			
@@ -108,6 +127,10 @@ public class SpleggHandler extends Updateable{
 			inGameCountdown--;
 		}else if(inGameCountdown == 0){
 			gameStartTitle();
+			for(PlayerData data : players){
+				Player player = data.getPlayer();
+				player.getInventory().addItem(new ItemStack(Material.IRON_SPADE));
+			}
 			inGameCountdown--;
 		}
 		
@@ -132,17 +155,19 @@ public class SpleggHandler extends Updateable{
 		for(PlayerData data : players){
 			Player player = data.getPlayer();
 			player.teleport(mid);
-			player.getInventory().addItem(new ItemStack(Material.IRON_SPADE));
 		}
 	}
 	
 	public void playerJoin(Player player){
 		player.setSaturation(100000000);
-		players.add(PlayerData.getPlayerData(player));
+		player.getInventory().clear();
+		player.setGameMode(GameMode.ADVENTURE);
+		PlayerData data = PlayerData.getPlayerData(player);
+		players.add(data);
 		if(gameState.equals(GameState.PREGAME)){
 			player.teleport(lobbyLocation);
 			Bukkit.broadcastMessage(ChatColor.GREEN + "➣ " + ChatColor.GOLD + player.getName() + ChatColor.GREEN + " has joined. " + ChatColor.GRAY + "[" + ChatColor.GOLD + players.size() + "/" + maxPlayers + ChatColor.GRAY + "]");
-			mapVote.sendVotingOptions(player);	
+			mapVote.sendVotingOptions(data, this);	
 		}else if(gameState.equals(GameState.PREGAME)) player.teleport(mid);
 	}
 	
@@ -152,9 +177,21 @@ public class SpleggHandler extends Updateable{
 			Bukkit.broadcastMessage(ChatColor.RED + "✘ " + ChatColor.GOLD + player.getName() + ChatColor.GREEN + " has left. " + ChatColor.GRAY + "[" + ChatColor.GOLD + players.size() + "/" + maxPlayers + ChatColor.GRAY + "]");
 		}
 	}
-
 	
-	public ArrayList<PlayerData> getAllivePlayer(){
+	public void playerVote(Player player, int number){
+		PlayerData data = PlayerData.getPlayerData(player);
+		mapVote.playerVote(player, number);
+	}
+	
+	public GameState getGameState(){
+		return gameState;
+	}
+	
+	public MapVote getMapVote(){
+		return mapVote;
+	}
+	
+	public ArrayList<PlayerData> getAllivePlayers(){
 		return players.stream().filter(player -> !player.isDead()).collect(Collectors.toCollection(ArrayList::new));
 	}
 	
@@ -163,6 +200,9 @@ public class SpleggHandler extends Updateable{
 		for(PlayerData data : players){
 			TitleAPI.sendFullTitle(data.getPlayer(), 10, 120, 20, ChatColor.GOLD + "" + ChatColor.BOLD + player.getPlayer().getName() + ChatColor.GREEN + " has won!", "");
 		}
+		
+		
+		
 	}
 
 

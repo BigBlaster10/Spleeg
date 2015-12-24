@@ -14,6 +14,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 
+import main.java.org.trompgames.utils.MapVote;
 import main.java.org.trompgames.utils.Updateable;
 import net.md_5.bungee.api.ChatColor;
 
@@ -23,7 +24,7 @@ public class SpleggMain extends JavaPlugin {
     private WorldEditPlugin we;
 
     private SpleggHandler handler;
-
+    
     @Override
     public void onEnable() {
         world = Bukkit.getWorlds().get(0);
@@ -33,13 +34,13 @@ public class SpleggMain extends JavaPlugin {
         Bukkit.broadcastMessage(ChatColor.AQUA + "Splegg Initialized...");
         getWorldEdit();
 
-        //this.saveDefaultConfig();
+        this.saveDefaultConfig();
 
 
         Location lobbyLoc = new Location(world, 173.5, 122, 247.5);
         Location mid = new Location(world, 212.5, 95, 249.5);
 
-        handler = new SpleggHandler(lobbyLoc, mid, 85, this.getConfig());
+        handler = new SpleggHandler(lobbyLoc, mid, 85, this.getConfig(), this);
 
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, Updateable::updateUpdateables, 0L, 1L);
 
@@ -72,6 +73,30 @@ public class SpleggMain extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
+            if (cmd.getName().equalsIgnoreCase("vote")) {
+            	PlayerData data = PlayerData.getPlayerData(player);
+            	if(args.length < 1){
+            		handler.getMapVote().sendVotingOptions(data, handler);
+            		return false;
+            	}
+            	
+            	int number = -1;
+            	try{            		
+            		number = Integer.parseInt(args[0]);
+            	}catch(Exception e){
+            		player.sendMessage(ChatColor.GREEN + "/vote #");
+            		return false;
+            	}
+            	
+            	
+            	MapVote vote = handler.getMapVote();
+            	if(number <= 0 || number > vote.getVotes().length){
+            		player.sendMessage(ChatColor.GREEN + "/vote #");
+            		return false;
+            	}            	
+            	
+            	handler.playerVote(player, number);            	
+            }            	
             if (!player.isOp()) return false;
 
             if (cmd.getName().equalsIgnoreCase("start")) {
@@ -91,7 +116,10 @@ public class SpleggMain extends JavaPlugin {
     			}
     			
     			switch(args[0].toLowerCase()){
-    				
+    			
+    			case "join":
+    				handler.playerJoin(player);
+    				return true;
     			case "maps":
     				
     				String s = ChatColor.GREEN + "Maps: " + ChatColor.GRAY + "[" + ChatColor.GREEN;
@@ -173,6 +201,7 @@ public class SpleggMain extends JavaPlugin {
         player.sendMessage(ChatColor.GREEN + "/splegg create <mapName> <schematicName>" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Creates a map");
         player.sendMessage(ChatColor.GREEN + "/splegg remove <mapName>" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Removes a map");
         player.sendMessage(ChatColor.GREEN + "/splegg setSpawn <mapname> <yaw> <pitch>" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Sets the lobby spawn");
+        player.sendMessage(ChatColor.GREEN + "/splegg join" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Join splegg");
         player.sendMessage(ChatColor.GREEN + "/splegg help" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Shows this message");
         player.sendMessage(ChatColor.GRAY + "------------------------------------------");
     }
@@ -191,7 +220,7 @@ public class SpleggMain extends JavaPlugin {
 
     public boolean setSpawn(String name, Location loc, double yaw, double pitch){
         int mapId = getMapId(name);
-
+        if(mapId == -1) return false;
         this.getConfig().set("map." + mapId + ".x", 1.0 * loc.getBlockX() + 0.5);
         this.getConfig().set("map." + mapId + ".y", 1.0 * loc.getBlockY() + 0.5);
         this.getConfig().set("map." + mapId + ".z", 1.0 * loc.getBlockZ() + 0.5);
@@ -221,7 +250,7 @@ public class SpleggMain extends JavaPlugin {
             double pitch = this.getConfig().getDouble("map." + i + ".pitch");
 
             int newPos = i-1;
-            Bukkit.broadcastMessage(n + " i: " + newPos);
+            //Bukkit.broadcastMessage(n + " i: " + newPos);
             this.getConfig().set("map." + newPos + ".name", n);
             this.getConfig().set("map." + newPos + ".schem", schem);
 

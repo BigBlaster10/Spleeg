@@ -38,7 +38,7 @@ public class SpleggListener implements Listener {
 
         Egg egg = (Egg) player.getWorld().spawnEntity(player.getEyeLocation(), EntityType.EGG);
         egg.setShooter(player);
-        egg.setVelocity(player.getLocation().getDirection().multiply(2));
+        egg.setVelocity(player.getLocation().getDirection().multiply(1.3));
         egg.setCustomName(player.getName());
 
         data.shoot();
@@ -52,7 +52,7 @@ public class SpleggListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        event.setCancelled(true);
+        //event.setCancelled(true);
     }
 
     @EventHandler
@@ -84,7 +84,9 @@ public class SpleggListener implements Listener {
         Material mat = block.getType();
         if (mat.equals(Material.BEDROCK) || mat.equals(Material.SIGN) || mat.equals(Material.SIGN_POST) || mat.equals(Material.WALL_SIGN) || mat.equals(Material.BARRIER) || mat.equals(Material.SKULL))
             return;
-
+        
+        
+        
         block.setType(Material.AIR);
 
 

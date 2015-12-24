@@ -6,6 +6,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import main.java.org.trompgames.splegg.SpleggMain;
+
 public class SpleggMap {
 
 	private String mapName;
@@ -38,6 +40,9 @@ public class SpleggMap {
 		this.spawnLoc.setPitch((float) pitch);
 	}
 	
+	public void loadMap(SpleggMain plugin, Location loc){
+		Schematic.loadArea(plugin, world, file, loc, true);
+	}	
 	
 	public String getMapName(){
 		return mapName;

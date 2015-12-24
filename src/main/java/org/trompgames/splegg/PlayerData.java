@@ -14,6 +14,8 @@ public class PlayerData extends Updateable{
 	private Player player;
 	private boolean isDead = false;
 	
+	private boolean hasVoted = false;
+	
 	private int cooldown = 0;
 	
 	private static List<PlayerData> playerData = new ArrayList<>();
@@ -37,6 +39,14 @@ public class PlayerData extends Updateable{
 	
 	public boolean isDead(){
 		return isDead;
+	}
+	
+	public boolean hasVoted(){
+		return hasVoted;
+	}
+	
+	public void setVoted(boolean hasVoted){
+		this.hasVoted = hasVoted;
 	}
 	
 	public void setDead(boolean isDead){

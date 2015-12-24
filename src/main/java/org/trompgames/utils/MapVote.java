@@ -7,8 +7,9 @@ import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
+import main.java.org.trompgames.splegg.PlayerData;
+import main.java.org.trompgames.splegg.SpleggHandler;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -37,6 +38,8 @@ public class MapVote {
 	
 	public ArrayList<TextComponent> getVotingOptions(){
 		ArrayList<TextComponent> options = new ArrayList<TextComponent>();
+		options.add(new TextComponent(ChatColor.GRAY + "-------------------------"));
+
 		options.add(new TextComponent(ChatColor.GREEN + "To vote click on a map or use /vote #"));
 		int i = 1;
 		for(String map : maps){
@@ -59,17 +62,38 @@ public class MapVote {
 		return options;
 	}
 	
-	public void sendVotingOptions(Player player){
+	public void sendVotingOptions(PlayerData data, SpleggHandler handler){
+		if(handler.getGameState().equals(SpleggHandler.GameState.PREGAME)){
+			if(data.hasVoted()) data.getPlayer().sendMessage(ChatColor.GREEN + "You have allready voted!");
+			else sendVotingOptions(data.getPlayer());
+		}else{
+			data.getPlayer().sendMessage(ChatColor.GREEN + "Game has already started!");
+		}
+	}
+	
+	private void sendVotingOptions(Player player){
 		for(TextComponent s : getVotingOptions()){
 			player.spigot().sendMessage(s);
 		}
 	}
 	
+	public void playerVote(Player player, int number){
+		if(number <= 0 || number > getVotes().length){
+    		player.sendMessage(ChatColor.GREEN + "/vote #");
+    		return;
+    	}
+		votes[number-1] += 1;
+		Bukkit.broadcastMessage(ChatColor.GOLD + player.getName() + ChatColor.GREEN + " voted for " + ChatColor.GOLD + maps.get((number-1)) + ChatColor.GRAY + "   |   " + ChatColor.GOLD + votes[number-1] + ChatColor.GREEN + " votes");
+		//player.sendMessage(ChatColor.GREEN + "You voted for " + maps.get(number-1));
+	}
 	
 	public SpleggMap getWinner(World world){
 		return new SpleggMap(getWinnerId(), config, world);	
 	}
 	
+	public int[] getVotes(){
+		return votes;
+	}
 	private int getWinnerId(){
 		int heighest = votes[0];
 		int pos = 0;
