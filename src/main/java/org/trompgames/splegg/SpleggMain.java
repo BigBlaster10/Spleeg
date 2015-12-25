@@ -24,6 +24,7 @@ public class SpleggMain extends JavaPlugin {
     private WorldEditPlugin we;
 
     private SpleggHandler handler;
+    private ConfigMessage configMessage;
     
     @Override
     public void onEnable() {
@@ -36,15 +37,37 @@ public class SpleggMain extends JavaPlugin {
 
         this.saveDefaultConfig();
 
+        
+       
+        Location lobbyLoc = getLocationFromConfig("lobby"); 
+        
+        Location mid = getLocationFromConfig("arena"); 
+        configMessage = new ConfigMessage(this.getConfig());
 
-        Location lobbyLoc = new Location(world, 173.5, 122, 247.5);
-        Location mid = new Location(world, 212.5, 95, 249.5);
-
-        handler = new SpleggHandler(lobbyLoc, mid, 85, this.getConfig(), this);
-
+        handler = new SpleggHandler(lobbyLoc, mid, 85, this.getConfig(), this, configMessage);
+        
+        configMessage.setHandler(handler);
+        
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, Updateable::updateUpdateables, 0L, 1L);
 
 
+    }
+    
+    public Location getLocationFromConfig(String path){
+    	int x = this.getConfig().getInt(path + ".x");
+        int y = this.getConfig().getInt(path + ".y");
+        int z = this.getConfig().getInt(path + ".z");
+
+        double yaw = this.getConfig().getDouble(path + ".yaw");
+        double pitch = this.getConfig().getDouble(path + ".pitch");
+
+        Location loc = new Location(world, x, y, z);
+        
+        loc.setYaw((float) yaw);
+        loc.setPitch((float) pitch);
+        return loc;
+    	
+    	
     }
 
     public World getWorld() {
@@ -73,7 +96,7 @@ public class SpleggMain extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            if (cmd.getName().equalsIgnoreCase("vote")) {
+            if (cmd.getName().equalsIgnoreCase("vote") || cmd.getName().equalsIgnoreCase("v")) {
             	PlayerData data = PlayerData.getPlayerData(player);
             	if(args.length < 1){
             		handler.getMapVote().sendVotingOptions(data, handler);
@@ -84,14 +107,14 @@ public class SpleggMain extends JavaPlugin {
             	try{            		
             		number = Integer.parseInt(args[0]);
             	}catch(Exception e){
-            		player.sendMessage(ChatColor.GREEN + "/vote #");
+            		player.sendMessage(this.configMessage.getMessage(player, "game.voteError"));
             		return false;
             	}
             	
             	
             	MapVote vote = handler.getMapVote();
             	if(number <= 0 || number > vote.getVotes().length){
-            		player.sendMessage(ChatColor.GREEN + "/vote #");
+            		player.sendMessage(this.configMessage.getMessage(player, "game.voteError"));
             		return false;
             	}            	
             	
@@ -101,7 +124,7 @@ public class SpleggMain extends JavaPlugin {
 
             if (cmd.getName().equalsIgnoreCase("start")) {
                 //String schem = args[0];
-
+            	
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     handler.playerJoin(p);
                 }
@@ -136,31 +159,45 @@ public class SpleggMain extends JavaPlugin {
     				return true;
     	
     			case "setspawn":
-    				if(args.length < 4){
+    				if(args.length < 3){
     					spleggHelp(player);
     					return false;
     				}
     				
-    				String name = args[1];
     				double yaw;
     				double pitch;
     				
     				try{
-    					yaw = Double.parseDouble(args[2]);
-    					pitch = Double.parseDouble(args[3]);					
+    					yaw = Double.parseDouble(args[1]);
+    					pitch = Double.parseDouble(args[2]);					
     				}catch(Exception e){
     					spleggHelp(player);
     					return false;
     				}	
-    				
-    				boolean set = setSpawn(name, player.getLocation(), yaw, pitch);
-    				if(set)
-    					player.sendMessage(ChatColor.GREEN + "Set spawn for map " + ChatColor.GOLD + args[1]);
-    				else
-    					player.sendMessage(ChatColor.DARK_RED + "" +  ChatColor.BOLD + "Error: " + ChatColor.RED + "Couldn't find a map by the name of '" + args[1] + "'");
+    				setSpawn(player.getLocation(), yaw, pitch);
+    				player.sendMessage(ChatColor.GREEN + "Set spawn for lobby");
 
     				return true;
+    			case "setarenaspawn":
+    				if(args.length < 3){
+    					spleggHelp(player);
+    					return false;
+    				}
+    				
+    				yaw = 0;
+    				pitch = 0;
+    				
+    				try{
+    					yaw = Double.parseDouble(args[1]);
+    					pitch = Double.parseDouble(args[2]);					
+    				}catch(Exception e){
+    					spleggHelp(player);
+    					return false;
+    				}	
+    				setArenaSpawn(player.getLocation(), yaw, pitch);
+    				player.sendMessage(ChatColor.GREEN + "Set arena spawn for lobby");
 
+    				return true;
     			case "create":
     				if(args.length < 3){
     					spleggHelp(player);
@@ -200,7 +237,8 @@ public class SpleggMain extends JavaPlugin {
         player.sendMessage(ChatColor.GREEN + "/splegg maps" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Get all maps from config");
         player.sendMessage(ChatColor.GREEN + "/splegg create <mapName> <schematicName>" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Creates a map");
         player.sendMessage(ChatColor.GREEN + "/splegg remove <mapName>" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Removes a map");
-        player.sendMessage(ChatColor.GREEN + "/splegg setSpawn <mapname> <yaw> <pitch>" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Sets the lobby spawn");
+        player.sendMessage(ChatColor.GREEN + "/splegg setSpawn <yaw> <pitch>" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Sets the lobby spawn");
+        player.sendMessage(ChatColor.GREEN + "/splegg setArenaSpaawn <yaw> <pitch>" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Sets the arena spawn");
         player.sendMessage(ChatColor.GREEN + "/splegg join" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Join splegg");
         player.sendMessage(ChatColor.GREEN + "/splegg help" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Shows this message");
         player.sendMessage(ChatColor.GRAY + "------------------------------------------");
@@ -218,15 +256,26 @@ public class SpleggMain extends JavaPlugin {
         this.saveConfig();
     }
 
-    public boolean setSpawn(String name, Location loc, double yaw, double pitch){
-        int mapId = getMapId(name);
-        if(mapId == -1) return false;
-        this.getConfig().set("map." + mapId + ".x", 1.0 * loc.getBlockX() + 0.5);
-        this.getConfig().set("map." + mapId + ".y", 1.0 * loc.getBlockY() + 0.5);
-        this.getConfig().set("map." + mapId + ".z", 1.0 * loc.getBlockZ() + 0.5);
+    public boolean setSpawn(Location loc, double yaw, double pitch){
+        this.getConfig().set("lobby.x", 1.0 * loc.getBlockX() + 0.5);
+        this.getConfig().set("lobby.y", 1.0 * loc.getBlockY() + 0.5);
+        this.getConfig().set("lobby.z", 1.0 * loc.getBlockZ() + 0.5);
 
-        this.getConfig().set("map." + mapId + ".yaw", yaw);
-        this.getConfig().set("map." + mapId + ".pitch", pitch);
+        this.getConfig().set("lobby.yaw", yaw);
+        this.getConfig().set("lobby.pitch", pitch);
+
+        this.saveConfig();
+
+        return true;
+    }
+    
+    public boolean setArenaSpawn(Location loc, double yaw, double pitch){
+        this.getConfig().set("arena.x", 1.0 * loc.getBlockX() + 0.5);
+        this.getConfig().set("arena.y", 1.0 * loc.getBlockY() + 0.5);
+        this.getConfig().set("arena.z", 1.0 * loc.getBlockZ() + 0.5);
+
+        this.getConfig().set("arena.yaw", yaw);
+        this.getConfig().set("arena.pitch", pitch);
 
         this.saveConfig();
 
@@ -242,24 +291,11 @@ public class SpleggMain extends JavaPlugin {
             String n = this.getConfig().getString("map." + i + ".name");
             String schem = this.getConfig().getString("map." + i + ".schem");
 
-            int x = this.getConfig().getInt("map." + i + ".x");
-            int y = this.getConfig().getInt("map." + i + ".y");
-            int z = this.getConfig().getInt("map." + i + ".z");
-
-            double yaw = this.getConfig().getDouble("map." + i + ".yaw");
-            double pitch = this.getConfig().getDouble("map." + i + ".pitch");
-
             int newPos = i-1;
             //Bukkit.broadcastMessage(n + " i: " + newPos);
             this.getConfig().set("map." + newPos + ".name", n);
             this.getConfig().set("map." + newPos + ".schem", schem);
 
-            this.getConfig().set("map." + newPos + ".x", 1.0 * x);
-            this.getConfig().set("map." + newPos + ".y", 1.0 * y);
-            this.getConfig().set("map." + newPos + ".z", 1.0 * z);
-
-            this.getConfig().set("map." + newPos + ".yaw", yaw);
-            this.getConfig().set("map." + newPos + ".pitch", pitch);
 
         }
 

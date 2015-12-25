@@ -7,6 +7,7 @@ import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
+import main.java.org.trompgames.splegg.ConfigMessage;
 import main.java.org.trompgames.splegg.PlayerData;
 import main.java.org.trompgames.splegg.SpleggHandler;
 import net.md_5.bungee.api.ChatColor;
@@ -20,11 +21,12 @@ public class MapVote {
 	private ArrayList<String> maps;
 	private int[] votes;
 	private FileConfiguration config;
+	private ConfigMessage configMessage;
 	
-	public MapVote(FileConfiguration config){
+	public MapVote(FileConfiguration config, ConfigMessage configMessage){
 		this.config = config;
 		this.maps = getMapNames();
-
+		this.configMessage = configMessage;
 		votes = new int[maps.size()];		
 	}
 	
@@ -63,11 +65,12 @@ public class MapVote {
 	}
 	
 	public void sendVotingOptions(PlayerData data, SpleggHandler handler){
-		if(handler.getGameState().equals(SpleggHandler.GameState.PREGAME)){
-			if(data.hasVoted()) data.getPlayer().sendMessage(ChatColor.GREEN + "You have allready voted!");
-			else sendVotingOptions(data.getPlayer());
+		if(handler.getGameState().equals(SpleggHandler.GameState.PREGAME)){			
+			sendVotingOptions(data.getPlayer());
 		}else{
-			data.getPlayer().sendMessage(ChatColor.GREEN + "Game has already started!");
+			data.getPlayer().sendMessage(this.configMessage.getMessage("game.voteGameStarted"));
+
+			//data.getPlayer().sendMessage(ChatColor.GREEN + "Game has already started!");
 		}
 	}
 	
@@ -79,11 +82,20 @@ public class MapVote {
 	
 	public void playerVote(Player player, int number){
 		if(number <= 0 || number > getVotes().length){
-    		player.sendMessage(ChatColor.GREEN + "/vote #");
+    		player.sendMessage(this.configMessage.getMessage(player, "game.voteError"));
     		return;
     	}
+		PlayerData data = PlayerData.getPlayerData(player);
+		if(data.hasVoted()){
+			data.getPlayer().sendMessage(this.configMessage.getMessage("game.alreadyVoted"));
+			//data.getPlayer().sendMessage(ChatColor.GREEN + "You have allready voted!");
+			return;
+		}
+		
+		data.setVoted(true);
 		votes[number-1] += 1;
-		Bukkit.broadcastMessage(ChatColor.GOLD + player.getName() + ChatColor.GREEN + " voted for " + ChatColor.GOLD + maps.get((number-1)) + ChatColor.GRAY + "   |   " + ChatColor.GOLD + votes[number-1] + ChatColor.GREEN + " votes");
+		Bukkit.broadcastMessage(this.configMessage.getMessage(player, maps.get(number-1), votes[number-1], "game.vote"));
+		//Bukkit.broadcastMessage(ChatColor.GOLD + player.getName() + ChatColor.GREEN + " voted for " + ChatColor.GOLD + maps.get((number-1)) + ChatColor.GRAY + "   |   " + ChatColor.GOLD + votes[number-1] + ChatColor.GREEN + " votes");
 		//player.sendMessage(ChatColor.GREEN + "You voted for " + maps.get(number-1));
 	}
 	

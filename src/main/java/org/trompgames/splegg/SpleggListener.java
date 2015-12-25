@@ -17,6 +17,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.util.BlockIterator;
 
+import main.java.org.trompgames.splegg.SpleggHandler.GameState;
+
 public class SpleggListener implements Listener {
 
     private SpleggMain spleggMain;
@@ -35,7 +37,8 @@ public class SpleggListener implements Listener {
 
         PlayerData data = PlayerData.getPlayerData(player);
         if (!data.canShoot()) return;
-
+        
+        if(!spleggMain.getHandler().getGameState().equals(GameState.INGAME)) return;
         Egg egg = (Egg) player.getWorld().spawnEntity(player.getEyeLocation(), EntityType.EGG);
         egg.setShooter(player);
         egg.setVelocity(player.getLocation().getDirection().multiply(1.3));

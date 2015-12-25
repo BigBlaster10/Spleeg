@@ -11,7 +11,6 @@ import main.java.org.trompgames.splegg.SpleggMain;
 public class SpleggMap {
 
 	private String mapName;
-	private Location spawnLoc;
 	private File file;
 	private FileConfiguration config;
 	private World world;
@@ -27,17 +26,6 @@ public class SpleggMap {
 	private void getData(){
 		mapName = config.getString("map." + mapId + ".name");
 		file = new File("plugins\\WorldEdit\\schematics\\" + config.getString("map." + mapId + ".schem") + ".schematic");
-
-		int x = config.getInt("map." + mapId + ".x");
-		int y = config.getInt("map." + mapId + ".y");
-		int z = config.getInt("map." + mapId + ".z");
-
-		double yaw = config.getDouble("map." + mapId + ".yaw");
-		double pitch = config.getDouble("map." + mapId + ".pitch");
-		
-		this.spawnLoc = new Location(world, x, y, z);
-		this.spawnLoc.setYaw((float) yaw);
-		this.spawnLoc.setPitch((float) pitch);
 	}
 	
 	public void loadMap(SpleggMain plugin, Location loc){
@@ -48,9 +36,7 @@ public class SpleggMap {
 		return mapName;
 	}
 	
-	public Location getSpawnLoc(){
-		return spawnLoc;
-	}
+	
 	
 	public File getFile(){
 		return file;
