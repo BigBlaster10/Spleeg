@@ -1,6 +1,7 @@
 
 package main.java.org.trompgames.splegg;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
@@ -9,6 +10,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -17,6 +19,7 @@ import org.bukkit.inventory.ItemStack;
 import com.connorlinfoot.titleapi.TitleAPI;
 
 import main.java.org.trompgames.utils.MapVote;
+import main.java.org.trompgames.utils.Schematic;
 import main.java.org.trompgames.utils.SpleggMap;
 import main.java.org.trompgames.utils.Updateable;
 
@@ -58,6 +61,8 @@ public class SpleggHandler extends Updateable{
 		this.config = config;
 		this.plugin = plugin;
 		this.configMessaage = configMessage;
+		Schematic.loadArea(plugin, world, new File("plugins\\WorldEdit\\schematics\\clear.schematic"), mid, true);
+
 	}
 
 	private int ticks = 0;
@@ -125,6 +130,10 @@ public class SpleggHandler extends Updateable{
 	
 	public void sendStartingMessage(){
 		if(preGameSeconds == 0) return;
+		for(PlayerData data : players){
+			Player player = data.getPlayer();
+			player.playSound(player.getLocation(), Sound.NOTE_PLING, 1f, 1f);
+		}
 		if(preGameSeconds == 1)
 			//Bukkit.broadcastMessage(ChatColor.GREEN + "Starting in " + ChatColor.GOLD + preGameSeconds + ChatColor.GREEN + " second!");
 			Bukkit.broadcastMessage(this.getConfigMessage().getMessage("game.lastGameStartingMessage"));
@@ -202,7 +211,11 @@ public class SpleggHandler extends Updateable{
 	
 	public void playerVote(Player player, int number){
 		PlayerData data = PlayerData.getPlayerData(player);
-		mapVote.playerVote(player, number);
+		mapVote.playerVote(player, number, this);
+	}
+	
+	public SpleggMap getMap(){
+		return this.map;
 	}
 	
 	public GameState getGameState(){
@@ -232,6 +245,7 @@ public class SpleggHandler extends Updateable{
 	public void win(PlayerData player){
 		gameState = GameState.OVER;
 		String title = this.getConfigMessage().getMessage(player.getPlayer(), "game.playerWinTitle");
+		player.getPlayer().setGameMode(GameMode.CREATIVE);
 		for(PlayerData data : players){
 			
 			TitleAPI.sendFullTitle(data.getPlayer(), 10, 120, 20, title, "");

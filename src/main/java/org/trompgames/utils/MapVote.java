@@ -40,18 +40,23 @@ public class MapVote {
 	
 	public ArrayList<TextComponent> getVotingOptions(){
 		ArrayList<TextComponent> options = new ArrayList<TextComponent>();
-		options.add(new TextComponent(ChatColor.GRAY + "-------------------------"));
+		
+		options.add(new TextComponent(this.configMessage.getMessage("game.voteMenuHeader")));
 
-		options.add(new TextComponent(ChatColor.GREEN + "To vote click on a map or use /vote #"));
+		//options.add(new TextComponent(ChatColor.GRAY + "-------------------------"));
+
+		options.add(new TextComponent(this.configMessage.getMessage("game.voteMenuInstructions")));
+		//options.add(new TextComponent(ChatColor.GREEN + "To vote click on a map or use /vote #"));
 		int i = 1;
 		for(String map : maps){
 									
-			String s = ChatColor.GRAY + "[" + ChatColor.GOLD + i + ChatColor.GRAY + "]  " + ChatColor.GOLD + map + ChatColor.GRAY + "   |   " + ChatColor.GOLD + votes[i-1] + ChatColor.GREEN + " votes";
-			
+			//String s = ChatColor.GRAY + "[" + ChatColor.GOLD + i + ChatColor.GRAY + "]  " + ChatColor.GOLD + map + ChatColor.GRAY + "   |   " + ChatColor.GOLD + votes[i-1] + ChatColor.GREEN + " votes";
+			String s = this.configMessage.getMessage(map, this, i, "game.voteMenuMap");
 			TextComponent text = new TextComponent(s);
 			
-			ComponentBuilder hoverText = new ComponentBuilder("Click to vote for " + map);
-			hoverText.color(ChatColor.GREEN);
+			ComponentBuilder hoverText = new ComponentBuilder(this.configMessage.getMessage(map, "game.voteMenuHover"));
+			//ComponentBuilder hoverText = new ComponentBuilder("Click to vote for " + map);
+			//hoverText.color(ChatColor.GREEN);
 			
 			text.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vote " + i));
 			text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText.create()));
@@ -60,7 +65,8 @@ public class MapVote {
 			
 			i++;
 		}
-		options.add(new TextComponent(ChatColor.GRAY + "-------------------------"));
+		options.add(new TextComponent(this.configMessage.getMessage("game.voteMenuFooter")));
+		
 		return options;
 	}
 	
@@ -68,7 +74,7 @@ public class MapVote {
 		if(handler.getGameState().equals(SpleggHandler.GameState.PREGAME)){			
 			sendVotingOptions(data.getPlayer());
 		}else{
-			data.getPlayer().sendMessage(this.configMessage.getMessage("game.voteGameStarted"));
+			data.getPlayer().sendMessage(this.configMessage.getMessage("game.voteEnded"));
 
 			//data.getPlayer().sendMessage(ChatColor.GREEN + "Game has already started!");
 		}
@@ -80,7 +86,14 @@ public class MapVote {
 		}
 	}
 	
-	public void playerVote(Player player, int number){
+	
+	
+	public void playerVote(Player player, int number, SpleggHandler handler){
+		if(handler.getMap() != null){
+    		player.sendMessage(this.configMessage.getMessage(player, "game.voteEnded"));
+    		return;
+		}
+			
 		if(number <= 0 || number > getVotes().length){
     		player.sendMessage(this.configMessage.getMessage(player, "game.voteError"));
     		return;

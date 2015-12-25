@@ -5,16 +5,22 @@ import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 
 import main.java.org.trompgames.utils.MapVote;
+import main.java.org.trompgames.utils.SoundMenu;
 import main.java.org.trompgames.utils.Updateable;
 import net.md_5.bungee.api.ChatColor;
 
@@ -96,6 +102,9 @@ public class SpleggMain extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
+            
+           
+            
             if (cmd.getName().equalsIgnoreCase("vote") || cmd.getName().equalsIgnoreCase("v")) {
             	PlayerData data = PlayerData.getPlayerData(player);
             	if(args.length < 1){
@@ -122,6 +131,14 @@ public class SpleggMain extends JavaPlugin {
             }            	
             if (!player.isOp()) return false;
 
+            
+            if(cmd.getName().equalsIgnoreCase("sound")){
+            	
+            	SoundMenu.getSoundMenu(player, this).openMenu();
+            	
+            	
+            }
+            
             if (cmd.getName().equalsIgnoreCase("start")) {
                 //String schem = args[0];
             	
@@ -205,7 +222,7 @@ public class SpleggMain extends JavaPlugin {
     				}
     				createMap(args[1], args[2]);
     				player.sendMessage(ChatColor.GREEN + "Created map " + ChatColor.GOLD + args[1] + ChatColor.GREEN + " with the schematic " + ChatColor.GOLD + args[2]);
-    				player.sendMessage(ChatColor.GREEN + "To finish creating the map use /splegg setSpawn");
+    				//player.sendMessage(ChatColor.GREEN + "To finish creating the map use /splegg setSpawn");
     				return true;
     			case "remove":
     				if(args.length < 2){

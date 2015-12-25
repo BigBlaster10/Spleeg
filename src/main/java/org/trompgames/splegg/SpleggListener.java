@@ -1,6 +1,10 @@
 package main.java.org.trompgames.splegg;
 
+import java.util.ArrayList;
+
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.EntityType;
@@ -12,12 +16,20 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.BlockIterator;
 
 import main.java.org.trompgames.splegg.SpleggHandler.GameState;
+import main.java.org.trompgames.utils.SoundMenu;
+import net.md_5.bungee.api.ChatColor;
 
 public class SpleggListener implements Listener {
 
@@ -37,13 +49,16 @@ public class SpleggListener implements Listener {
 
         PlayerData data = PlayerData.getPlayerData(player);
         if (!data.canShoot()) return;
+        if(data.isDead()) return;
         
         if(!spleggMain.getHandler().getGameState().equals(GameState.INGAME)) return;
         Egg egg = (Egg) player.getWorld().spawnEntity(player.getEyeLocation(), EntityType.EGG);
         egg.setShooter(player);
         egg.setVelocity(player.getLocation().getDirection().multiply(1.3));
         egg.setCustomName(player.getName());
-
+        
+        //player.getWorld().playSound(player.getLocation(), Sound., 1f, 1f);
+        
         data.shoot();
 
     }
@@ -85,13 +100,14 @@ public class SpleggListener implements Listener {
         }
         if (block == null) return;
         Material mat = block.getType();
+       
         if (mat.equals(Material.BEDROCK) || mat.equals(Material.SIGN) || mat.equals(Material.SIGN_POST) || mat.equals(Material.WALL_SIGN) || mat.equals(Material.BARRIER) || mat.equals(Material.SKULL))
             return;
         
         
         
         block.setType(Material.AIR);
-
+        block.getLocation().getWorld().playSound(block.getLocation(), Sound.CHICKEN_EGG_POP, 0.5f, 1f);
 
     }
 
@@ -99,5 +115,48 @@ public class SpleggListener implements Listener {
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         event.setCancelled(true);
     }
+    
+    
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event){
+    	if(!event.getAction().equals(InventoryAction.PICKUP_ALL)) return;
+    	if(event.getClickedInventory().getTitle() == null) return;
+    	if(!event.getClickedInventory().getTitle().contains("Sounds")) return;
+    	
+    	ItemStack item = event.getCurrentItem();
+    	if(!item.hasItemMeta()) return;
+    	if(!item.getItemMeta().hasDisplayName()) return;
+    	event.setCancelled(true);
+    	
+    	
+    	Player player = (Player) event.getWhoClicked();
+
+    	SoundMenu.getSoundMenu(player, this.spleggMain).menuClick(item);
+    }
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 }

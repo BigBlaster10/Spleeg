@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
+import main.java.org.trompgames.utils.MapVote;
+import main.java.org.trompgames.utils.SpleggMap;
 import net.md_5.bungee.api.ChatColor;
 
 public class ConfigMessage {
@@ -35,6 +37,17 @@ public class ConfigMessage {
 		String s = StringEscapeUtils.unescapeJava(config.getString(path));
 		s = s.replaceAll("%player%", player.getName());
 		s = s.replaceAll("%int%", "" + integer);
+
+		s = replaceStuff(s);
+		return replaceColorCodes(s);
+	}
+	
+	public String getMessage(String map, MapVote vote, int mapNumbr, String path){
+		String s = StringEscapeUtils.unescapeJava(config.getString(path));
+		s = s.replaceAll("%mapName%", map);
+		s = s.replaceAll("%mapVotes%", "" + vote.getVotes()[mapNumbr-1]);
+
+		s = s.replaceAll("%mapNumber%", "" + (mapNumbr));
 
 		s = replaceStuff(s);
 		return replaceColorCodes(s);
