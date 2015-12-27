@@ -18,11 +18,9 @@ public abstract class Updateable {
 
     protected abstract void update();
 
-
     static int totalTicks = 1;
 
     public static void updateUpdateables() {
-
         for (Updateable update : updates) {
             update.currentTicks++;
             if (update.currentTicks >= update.ticks) {
@@ -43,5 +41,9 @@ public abstract class Updateable {
             return updates;
         }
         throw new NullPointerException("Updates not initialized.");
+    }
+    
+    public void remove(){
+    	updates.remove(this);
     }
 }

@@ -10,6 +10,9 @@ import net.md_5.bungee.api.ChatColor;
 
 public class ConfigMessage {
 
+	
+	//TODO: Fix this crap up, add a builder or something
+	
 	private FileConfiguration config;
 	private SpleggHandler handler;
 	
@@ -23,6 +26,7 @@ public class ConfigMessage {
 	
 	public String getMessage(String path){
 		String s =  StringEscapeUtils.unescapeJava(config.getString(path));
+		s = replaceStuff(s);
 		return replaceColorCodes(s);
 	}
 	
@@ -83,7 +87,11 @@ public class ConfigMessage {
 	public String replaceStuff(String s){
 		s = s.replaceAll("%players%", "" + handler.getPlayers().size());
 		s = s.replaceAll("%maxPlayers%", "" + SpleggHandler.getMaxPlayers());
-		
+		s = s.replaceAll("%eliminated%", "" + Math.abs((handler.getAllivePlayers().size() - handler.getPlayers().size())));
+		s = s.replaceAll("%allivePlayers%", "" + handler.getAllivePlayers().size());
+		s = s.replaceAll("%spectators%", "" + handler.getSpectators().size());
+		s = s.replaceAll("%minutesLeft%", "" + handler.getMinutesLeft());
+		s = s.replaceAll("%secondsLeft%", "" + handler.getSecondsLeft());
 		return s;
 	}
 	

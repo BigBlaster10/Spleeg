@@ -3,20 +3,28 @@ package main.java.org.trompgames.splegg;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
 
 import com.connorlinfoot.titleapi.TitleAPI;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 
 import main.java.org.trompgames.utils.MapVote;
 import main.java.org.trompgames.utils.Schematic;
@@ -37,6 +45,9 @@ public class SpleggHandler extends Updateable{
 	private final int INGAMECOUNTDOWN = 5;
 	private int inGameCountdown = INGAMECOUNTDOWN;
 	
+	private final int INGAMETIME = 600 + INGAMECOUNTDOWN + 1;
+	private int inGameTime = INGAMETIME;
+	
 	private World world;
 	private Location lobbyLocation;
 	private Location mid;
@@ -45,11 +56,42 @@ public class SpleggHandler extends Updateable{
 	private SpleggMap map;
 	private MapVote mapVote;
 	private FileConfiguration config;
-    private ConfigMessage configMessaage;
+    private ConfigMessage configMessage;
 
+    private SpleggScoreboard spleggScoreboard;
+    
 	private SpleggMain plugin; 
 	
 	ArrayList<PlayerData> players = new ArrayList<>();
+	
+	public void restart(boolean kick){
+		PlayerData.getPlayerData().clear();
+		players.clear();
+		gameState = GameState.PREGAME;
+
+		if(kick){
+			for(Player player: Bukkit.getOnlinePlayers()){
+				ByteArrayDataOutput out = ByteStreams.newDataOutput();
+	            out.writeUTF("Connect");
+	            out.writeUTF("lobby"); 
+	            player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());				
+			}	
+		}else{
+			for(Player player: Bukkit.getOnlinePlayers()){
+				this.playerJoin(player);				
+			}
+		}
+		
+		
+		map = null;
+		this.preGameSeconds = COUNTDOWNSECONDS;
+		this.inGameCountdown = INGAMECOUNTDOWN;
+		this.inGameTime = INGAMETIME;
+		this.won = false;
+		this.mapVote = new MapVote(config, configMessage);
+		this.spleggScoreboard = new PreGameScoreboard(this, configMessage);
+		Schematic.loadArea(plugin, world, new File("plugins\\WorldEdit\\schematics\\clear.schematic"), mid, true);
+	}
 	
 	protected SpleggHandler(Location lobbyLocation, Location mid, int y, FileConfiguration config, SpleggMain plugin, ConfigMessage configMessage){
 		super(1);
@@ -60,7 +102,8 @@ public class SpleggHandler extends Updateable{
 		this.mapVote = new MapVote(config, configMessage);
 		this.config = config;
 		this.plugin = plugin;
-		this.configMessaage = configMessage;
+		this.configMessage = configMessage;
+		this.spleggScoreboard = new PreGameScoreboard(this, configMessage);
 		Schematic.loadArea(plugin, world, new File("plugins\\WorldEdit\\schematics\\clear.schematic"), mid, true);
 
 	}
@@ -69,6 +112,7 @@ public class SpleggHandler extends Updateable{
 	@Override
 	protected void update() {
 		ticks++;
+
 		if(gameState.equals(GameState.PREGAME) && ticks == 20) preGameUpdate();
 		else if(gameState.equals(GameState.INGAME) && ticks == 20) inGameUpdate();
 		if(gameState.equals(GameState.INGAME)){
@@ -78,8 +122,12 @@ public class SpleggHandler extends Updateable{
 				this.checkWin();
 			}
 		}
+		spleggScoreboard.updateScoreboard();
+
 		if(ticks >= 20) ticks = 0;
 	}
+	
+	
 	
 	public void checkWin(){
 		if(getAllivePlayers().size() == 1){
@@ -88,7 +136,15 @@ public class SpleggHandler extends Updateable{
 	}
 
 	public ConfigMessage getConfigMessage(){
-		return this.configMessaage;
+		return this.configMessage;
+	}
+	
+	public ArrayList<PlayerData> getSpectators(){
+		ArrayList<PlayerData> specs = new ArrayList<>();
+		for(PlayerData data : players){
+			if(data.isDead() && Bukkit.getPlayer(data.getPlayer().getName()) != null) specs.add(data);
+		}
+		return specs;
 	}
 	
 	public void killPlayer(PlayerData data){
@@ -130,9 +186,11 @@ public class SpleggHandler extends Updateable{
 	
 	public void sendStartingMessage(){
 		if(preGameSeconds == 0) return;
-		for(PlayerData data : players){
-			Player player = data.getPlayer();
-			player.playSound(player.getLocation(), Sound.NOTE_PLING, 1f, 1f);
+		if(preGameSeconds == 10 || preGameSeconds <= 5){
+			for(PlayerData data : players){
+				Player player = data.getPlayer();
+				//player.playSound(player.getLocation(), Sound.NOTE_PLING, 1f, 1f);
+			}
 		}
 		if(preGameSeconds == 1)
 			//Bukkit.broadcastMessage(ChatColor.GREEN + "Starting in " + ChatColor.GOLD + preGameSeconds + ChatColor.GREEN + " second!");
@@ -146,6 +204,8 @@ public class SpleggHandler extends Updateable{
 
 	
 	public void inGameUpdate(){
+		inGameTime--;
+
 		if(inGameCountdown > 0){
 			gameStartingTitle();
 			inGameCountdown--;
@@ -154,16 +214,18 @@ public class SpleggHandler extends Updateable{
 			for(PlayerData data : players){
 				Player player = data.getPlayer();
 				player.getInventory().addItem(new ItemStack(Material.IRON_SPADE));
+				data.getPlayerStats().addGamePlayed();
 			}
 			inGameCountdown--;
 		}
-		
-		
+
 	}
 	
 	public void gameStartingTitle(){
 		for(PlayerData player : players){
 			String title = this.getConfigMessage().getMessage(this.inGameCountdown, "game.gameStartingTitle");
+			//player.getPlayer().playSound(player.getPlayer().getLocation(), Sound.NOTE_STICKS, 1f, 0.25f);
+			player.getPlayer().playSound(player.getPlayer().getLocation(), Sound.NOTE_PLING, 1f, 0.5f);
 
 			TitleAPI.sendFullTitle(player.getPlayer(), 0, 25, 10, title, "");
 		}
@@ -172,6 +234,7 @@ public class SpleggHandler extends Updateable{
 	public void gameStartTitle(){
 		for(PlayerData player : players){
 			String title = this.getConfigMessage().getMessage("game.gameStartTitle");
+			player.getPlayer().playSound(player.getPlayer().getLocation(), Sound.NOTE_PLING, 1f, 1f);
 
 			TitleAPI.sendFullTitle(player.getPlayer(), 0, 10, 10, ChatColor.GREEN + "" + ChatColor.BOLD + "Splegg!", "");
 		}
@@ -180,24 +243,36 @@ public class SpleggHandler extends Updateable{
 	
 	public void startGame(){
 		this.gameState = GameState.INGAME;
+		this.spleggScoreboard = new InGameScoreboard(this, configMessage);
 		for(PlayerData data : players){
 			Player player = data.getPlayer();
 			player.teleport(mid);
+			spleggScoreboard.addPlayer(player);
 		}
 	}
 	
 	public void playerJoin(Player player){
 		player.setSaturation(100000000);
+		player.setFoodLevel(20);
 		player.getInventory().clear();
-		player.setGameMode(GameMode.ADVENTURE);
+		player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
 		PlayerData data = PlayerData.getPlayerData(player);
-		players.add(data);
 		if(gameState.equals(GameState.PREGAME)){
+			player.setGameMode(GameMode.ADVENTURE);
+			players.add(data);
 			player.teleport(lobbyLocation);
 			Bukkit.broadcastMessage(this.getConfigMessage().getMessage(player, "game.playerJoin"));
+			spleggScoreboard.addPlayer(player);
+
 			//Bukkit.broadcastMessage(ChatColor.GREEN + "➣ " + ChatColor.GOLD + player.getName() + ChatColor.GREEN + " has joined. " + ChatColor.GRAY + "[" + ChatColor.GOLD + players.size() + "/" + maxPlayers + ChatColor.GRAY + "]");
 			mapVote.sendVotingOptions(data, this);	
-		}else if(gameState.equals(GameState.PREGAME)) player.teleport(mid);
+		}else {
+			player.setGameMode(GameMode.CREATIVE);
+			player.teleport(mid);
+			data.setDead(true);
+			players.add(data);
+			
+		}
 	}
 	
 	public void playerQuit(Player player){
@@ -242,12 +317,25 @@ public class SpleggHandler extends Updateable{
 		return minPlayers;
 	}
 	
+	public String getMinutesLeft(){
+		return "" + (int) (1.0 * inGameTime / (60));
+	}
+	
+	public String getSecondsLeft(){
+		String seconds = "" + (int) (1.0 * inGameTime) % 60;
+		if(seconds.length() == 1) seconds = "0" + seconds;
+		return seconds;
+	}
+	
+	boolean won = false;
 	public void win(PlayerData player){
+		if(won) return;
+		won = true;
 		gameState = GameState.OVER;
+		player.getPlayerStats().addWin();
 		String title = this.getConfigMessage().getMessage(player.getPlayer(), "game.playerWinTitle");
 		player.getPlayer().setGameMode(GameMode.CREATIVE);
-		for(PlayerData data : players){
-			
+		for(PlayerData data : players){			
 			TitleAPI.sendFullTitle(data.getPlayer(), 10, 120, 20, title, "");
 		}
 		
@@ -258,8 +346,55 @@ public class SpleggHandler extends Updateable{
 			}
 		}
 		
+		spawnFireworks(this.mid, 60);         
+	}
+	
+	public void spawnFireworks(Location loc, int i){
+		if(i <= 0){
+			
+			restart(false);
+			return;
+		}
+		 Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+	            @Override
+	            public void run() {
+	            	
+	            	Location rLoc = getRandomLoc(loc, 30);
+	            	
+	            	//Firework fireWork = (Firework) rLoc.getWorld().spawnEntity(rLoc, EntityType.FIREWORK);
+	               // FireworkMeta meta = fireWork.getFireworkMeta();
+	                
+	                int r = rand.nextInt(256);
+	                int g = rand.nextInt(256);
+	                int b = rand.nextInt(256);
+
+	                int r1 = rand.nextInt(256);
+	                int g1 = rand.nextInt(256);
+	                int b1 = rand.nextInt(256);
+	                
+	                //FireworkEffect effect = FireworkEffect.builder().with(org.bukkit.FireworkEffect.Type.BALL_LARGE).flicker(true).withColor(Color.fromRGB(r,g,b)).withColor(Color.fromRGB(r1,g1,b1)).withTrail().build();         
+	                //meta.addEffect(effect);
+	               // fireWork.setFireworkMeta(meta);
+	            	
+	                spawnFireworks(loc, i-1);
+	            }
+	     }, 5L);
+	}
+	
+	Random rand = new Random();
+	public Location getRandomLoc(Location loc, int radius){
+		
+		 int x = rand.nextInt(radius);
+		 int z = rand.nextInt(radius);
+		 
+		 if(Math.random() >= 0.5) x = -x;
+		 if(Math.random() >= 0.5) z = -z;
+
+		 
+		 return loc.clone().add(x,0,z);
 		
 	}
+	
 
 
 	public enum GameState{

@@ -2,25 +2,25 @@ package main.java.org.trompgames.splegg;
 
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 
 import main.java.org.trompgames.utils.MapVote;
-import main.java.org.trompgames.utils.SoundMenu;
 import main.java.org.trompgames.utils.Updateable;
 import net.md_5.bungee.api.ChatColor;
 
@@ -41,9 +41,15 @@ public class SpleggMain extends JavaPlugin {
         Bukkit.broadcastMessage(ChatColor.AQUA + "Splegg Initialized...");
         getWorldEdit();
 
+        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+        
         this.saveDefaultConfig();
 
-        
+        //if(this.getConfig().getString("debug").equalsIgnoreCase("true")){
+        //	Bukkit.broadcastMessage(ChatColor.DARK_RED + "" + ChatColor.BOLD + "NOTICE: " + ChatColor.RED + "Debug/Setup mode is enabled, to enable the game turn 'debug' to false in the config");
+        //	System.out.println("[Splegg] NOTICE: Debug/Setup mode is enabled, to enable the game turn 'debug' to false in the config");
+        //	return;        	
+        //}
        
         Location lobbyLoc = getLocationFromConfig("lobby"); 
         
@@ -83,6 +89,10 @@ public class SpleggMain extends JavaPlugin {
     public SpleggHandler getHandler() {
         return handler;
     }
+    
+    public void setHandler(SpleggHandler handler){
+    	this.handler = handler;
+    }
 
     public WorldEditPlugin getWorldEdit() {
         try {
@@ -102,7 +112,24 @@ public class SpleggMain extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            
+            Random rand = new Random();
+            if(cmd.getName().equalsIgnoreCase("fw")){
+            	
+            	Firework fireWork = (Firework) player.getPlayer().getWorld().spawnEntity(player.getPlayer().getLocation(), EntityType.FIREWORK);
+                FireworkMeta meta = fireWork.getFireworkMeta();
+                
+                int r = rand.nextInt(256);
+                int g = rand.nextInt(256);
+                int b = rand.nextInt(256);
+
+                int r1 = rand.nextInt(256);
+                int g1 = rand.nextInt(256);
+                int b1 = rand.nextInt(256);
+                
+                FireworkEffect effect = FireworkEffect.builder().with(org.bukkit.FireworkEffect.Type.BALL).flicker(true).withColor(Color.fromRGB(r,g,b)).withColor(Color.fromRGB(r1,g1,b1)).withTrail().build();         
+                meta.addEffect(effect);
+                fireWork.setFireworkMeta(meta);
+            }
            
             
             if (cmd.getName().equalsIgnoreCase("vote") || cmd.getName().equalsIgnoreCase("v")) {
@@ -130,14 +157,6 @@ public class SpleggMain extends JavaPlugin {
             	handler.playerVote(player, number);            	
             }            	
             if (!player.isOp()) return false;
-
-            
-            if(cmd.getName().equalsIgnoreCase("sound")){
-            	
-            	SoundMenu.getSoundMenu(player, this).openMenu();
-            	
-            	
-            }
             
             if (cmd.getName().equalsIgnoreCase("start")) {
                 //String schem = args[0];

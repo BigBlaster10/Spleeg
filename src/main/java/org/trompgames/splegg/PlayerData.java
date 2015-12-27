@@ -18,11 +18,14 @@ public class PlayerData extends Updateable{
 	
 	private int cooldown = 0;
 	
+	private PlayerStats playerStats;
+	
 	private static List<PlayerData> playerData = new ArrayList<>();
 	
 	private PlayerData(Player player){
 		super(1);
 		this.player = player;
+		this.playerStats = new PlayerStats(player);
 		playerData.add(this);
 	}
 	
@@ -51,6 +54,7 @@ public class PlayerData extends Updateable{
 	
 	public void setDead(boolean isDead){
 		this.isDead = isDead;
+		if(isDead) this.getPlayerStats().addDeath();
 	}
 
 	public boolean canShoot(){
@@ -59,6 +63,11 @@ public class PlayerData extends Updateable{
 	
 	public void shoot(){
 		this.cooldown = SHOOTCOOLDOWN;
+		this.playerStats.addEggsShot();
+	}
+	
+	public PlayerStats getPlayerStats(){
+		return playerStats;
 	}
 	
 	@Override
@@ -74,6 +83,93 @@ public class PlayerData extends Updateable{
 			return playerData;
 		}
 		throw new NullPointerException("PlayerData not initialized.");
+	}	
+	
+	public static class PlayerStats{
+		
+		private Player player;
+		
+		private int deaths;
+		private int gamesPlayed;
+		private int eggsShot;
+		private int blocksDestroyed;
+		private int pointsAquired;		
+		private int wins;
+		
+		public static ArrayList<PlayerStats> stats = new ArrayList<PlayerStats>();
+		
+		private PlayerStats(Player player){
+			this.player = player;
+			stats.add(this);
+		}
+		
+		public static PlayerStats getPlayer(Player player){
+			for(PlayerStats stat : stats){
+				if(stat.getPlayer().equals(player)) return stat;
+			}
+			return new PlayerStats(player);
+		}				
+		
+		public Player getPlayer(){
+			return player;
+		}
+		
+		
+		public void addDeath(){
+			deaths++;
+		}
+		
+		public void addGamePlayed(){
+			gamesPlayed++;
+		}
+		
+		public void addEggsShot(){
+			eggsShot++;
+		}
+		
+		public void addBlocksDestroyed(){
+			blocksDestroyed++;
+		}
+		
+		public void addPointsAquired(int points){
+			pointsAquired += points;
+		}
+		
+		public void addWin(){
+			wins++;
+		}
+
+		public int getDeaths() {
+			return deaths;
+		}
+
+		public int getGamesPlayed() {
+			return gamesPlayed;
+		}
+
+		public int getEggsShot() {
+			return eggsShot;
+		}
+
+		public int getBlocksDestroyed() {
+			return blocksDestroyed;
+		}
+
+		public int getPointsAquired() {
+			return pointsAquired;
+		}
+
+		public int getWins() {
+			return wins;
+		}
+
+		public static ArrayList<PlayerStats> getStats() {
+			return stats;
+		}	
+	
 	}
+	
+	
+	
 
 }
