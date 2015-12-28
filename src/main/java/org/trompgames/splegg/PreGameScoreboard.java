@@ -38,12 +38,14 @@ public class PreGameScoreboard extends SpleggScoreboard{
 		objective.setDisplayName(configMessage.getMessage("game.preGameScoreboardHeader"));
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 			
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardWins")).setScore(20); 
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardGamesPlayed")).setScore(19); 
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardEggsShot")).setScore(18); 
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardBlocksDestroyed")).setScore(17); 
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardDeaths")).setScore(16); 
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardDeaths")).setScore(16); 
+		PlayerData data = PlayerData.getPlayerData(player);
+		PlayerData.PlayerStats stat = data.getPlayerStats();
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardWins")).setScore(stat.getCurrentWins()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardGamesPlayed")).setScore(stat.getCurrentGamesPlayed()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardEggsShot")).setScore(stat.getCurrentEggsShot()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardBlocksDestroyed")).setScore(stat.getCurrentBlocksDestroyed()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardDeaths")).setScore(stat.getCurrentDeaths()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardPoints")).setScore(stat.getCurrentPoints()); 
 
 		
 		

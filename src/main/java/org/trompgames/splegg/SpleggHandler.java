@@ -64,16 +64,18 @@ public class SpleggHandler extends Updateable{
 	
 	ArrayList<PlayerData> players = new ArrayList<>();
 	
-	public void restart(boolean kick){
+	public void restart(){
+		Bukkit.broadcastMessage(this.configMessage.getMessage("game.gameRestart"));
+		PlayerData.PlayerStats.saveStats();
 		PlayerData.getPlayerData().clear();
 		players.clear();
 		gameState = GameState.PREGAME;
 
-		if(kick){
+		if(config.getBoolean("bungee.kickEnabled")){
 			for(Player player: Bukkit.getOnlinePlayers()){
 				ByteArrayDataOutput out = ByteStreams.newDataOutput();
 	            out.writeUTF("Connect");
-	            out.writeUTF("lobby"); 
+	            out.writeUTF(config.getString("bungee.kickServer")); 
 	            player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());				
 			}	
 		}else{
@@ -90,6 +92,9 @@ public class SpleggHandler extends Updateable{
 		this.won = false;
 		this.mapVote = new MapVote(config, configMessage);
 		this.spleggScoreboard = new PreGameScoreboard(this, configMessage);
+		for(PlayerData data : players){
+			spleggScoreboard.addPlayer(data.getPlayer());
+		}
 		Schematic.loadArea(plugin, world, new File("plugins\\WorldEdit\\schematics\\clear.schematic"), mid, true);
 	}
 	
@@ -105,14 +110,12 @@ public class SpleggHandler extends Updateable{
 		this.configMessage = configMessage;
 		this.spleggScoreboard = new PreGameScoreboard(this, configMessage);
 		Schematic.loadArea(plugin, world, new File("plugins\\WorldEdit\\schematics\\clear.schematic"), mid, true);
-
 	}
 
 	private int ticks = 0;
 	@Override
 	protected void update() {
 		ticks++;
-
 		if(gameState.equals(GameState.PREGAME) && ticks == 20) preGameUpdate();
 		else if(gameState.equals(GameState.INGAME) && ticks == 20) inGameUpdate();
 		if(gameState.equals(GameState.INGAME)){
@@ -123,7 +126,6 @@ public class SpleggHandler extends Updateable{
 			}
 		}
 		spleggScoreboard.updateScoreboard();
-
 		if(ticks >= 20) ticks = 0;
 	}
 	
@@ -152,9 +154,7 @@ public class SpleggHandler extends Updateable{
 		player.setGameMode(GameMode.CREATIVE);
 		//Bukkit.broadcastMessage(ChatColor.GOLD + player.getName() + ChatColor.GREEN + " Died");
 		Bukkit.broadcastMessage(this.getConfigMessage().getMessage(player, "game.playerDeath"));
-
 		data.setDead(true);
-				
 		for(PlayerData p : players){
 			p.getPlayer().hidePlayer(player);
 		}
@@ -204,6 +204,19 @@ public class SpleggHandler extends Updateable{
 
 	
 	public void inGameUpdate(){
+		if(inGameTime <= 0){
+			inGameTime = 0;
+			Bukkit.broadcastMessage(this.getConfigMessage().getMessage("game.timerEnd"));
+			SpleggHandler handler = this;
+			Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+	            @Override
+	            public void run() {
+	            	handler.restart();          	
+	            }
+			}, config.getLong("game.restartTime"));
+			return;
+		}
+		
 		inGameTime--;
 
 		if(inGameCountdown > 0){
@@ -218,6 +231,8 @@ public class SpleggHandler extends Updateable{
 			}
 			inGameCountdown--;
 		}
+		
+		
 
 	}
 	
@@ -248,6 +263,10 @@ public class SpleggHandler extends Updateable{
 			Player player = data.getPlayer();
 			player.teleport(mid);
 			spleggScoreboard.addPlayer(player);
+			for(Player p : Bukkit.getOnlinePlayers()){
+				if(p.equals(data.getPlayer())) continue;
+				p.showPlayer(data.getPlayer());
+			}
 		}
 	}
 	
@@ -279,13 +298,14 @@ public class SpleggHandler extends Updateable{
 		players.remove(PlayerData.getPlayerData(player));
 		if(gameState.equals(GameState.PREGAME)){
 			Bukkit.broadcastMessage(this.getConfigMessage().getMessage(player, "game.playerQuit"));
-
+			
 			//Bukkit.broadcastMessage(ChatColor.RED + "✘ " + ChatColor.GOLD + player.getName() + ChatColor.GREEN + " has left. " + ChatColor.GRAY + "[" + ChatColor.GOLD + players.size() + "/" + maxPlayers + ChatColor.GRAY + "]");
+		}else if(!PlayerData.getPlayerData(player).isDead()){
+			PlayerData.getPlayerData(player).setDead(true);
 		}
 	}
 	
 	public void playerVote(Player player, int number){
-		PlayerData data = PlayerData.getPlayerData(player);
 		mapVote.playerVote(player, number, this);
 	}
 	
@@ -345,14 +365,18 @@ public class SpleggHandler extends Updateable{
 					p.showPlayer(data.getPlayer());
 			}
 		}
-		
-		spawnFireworks(this.mid, 60);         
+		SpleggHandler handler = this;
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+            	handler.restart();          	
+            }
+		}, config.getLong("game.restartTime"));	
 	}
 	
 	public void spawnFireworks(Location loc, int i){
-		if(i <= 0){
-			
-			restart(false);
+		if(i <= 0){			
+			restart();
 			return;
 		}
 		 Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {

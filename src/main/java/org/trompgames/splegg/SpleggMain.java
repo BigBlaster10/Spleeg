@@ -40,11 +40,20 @@ public class SpleggMain extends JavaPlugin {
 
         Bukkit.broadcastMessage(ChatColor.AQUA + "Splegg Initialized...");
         getWorldEdit();
-
-        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         
         this.saveDefaultConfig();
 
+        
+        String url = this.getConfig().getString("mysql.url");
+        String user = this.getConfig().getString("mysql.username");
+        String pass = this.getConfig().getString("mysql.password");
+        String schema = this.getConfig().getString("mysql.schema");
+        String table = this.getConfig().getString("mysql.table");
+        
+        PlayerData.PlayerStats.createConnection(url, user, pass, schema, table);
+        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+        
+        
         //if(this.getConfig().getString("debug").equalsIgnoreCase("true")){
         //	Bukkit.broadcastMessage(ChatColor.DARK_RED + "" + ChatColor.BOLD + "NOTICE: " + ChatColor.RED + "Debug/Setup mode is enabled, to enable the game turn 'debug' to false in the config");
         //	System.out.println("[Splegg] NOTICE: Debug/Setup mode is enabled, to enable the game turn 'debug' to false in the config");
@@ -178,6 +187,11 @@ public class SpleggMain extends JavaPlugin {
     			
     			case "join":
     				handler.playerJoin(player);
+    				return true;
+    			case "joinall":
+    				for(Player p : Bukkit.getOnlinePlayers()){
+    					handler.playerJoin(p);
+    				}
     				return true;
     			case "maps":
     				
