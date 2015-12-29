@@ -18,6 +18,7 @@ public class PlayerData extends Updateable{
 
 	public static final int SHOOTCOOLDOWN = 2;
 
+	private SpleggHandler handler;
 	private Player player;
 	private boolean isDead = false;
 	
@@ -43,6 +44,13 @@ public class PlayerData extends Updateable{
 		return new PlayerData(player);
 	}	
 	
+	public static boolean hasData(Player player){
+		for(PlayerData data : playerData){
+			if(data.getPlayer().equals(player)) return true;
+		}
+		return false;
+	}
+	
 	public Player getPlayer(){
 		return player;
 	}
@@ -57,6 +65,19 @@ public class PlayerData extends Updateable{
 	
 	public void setVoted(boolean hasVoted){
 		this.hasVoted = hasVoted;
+	}
+	
+	public SpleggHandler getSpleggHandler(){
+		return handler;
+	}
+	
+	public boolean isInGame(){
+		if(handler == null) return false;
+		return true;
+	}
+	
+	public void setSpleggHandler(SpleggHandler handler){
+		this.handler = handler;
 	}
 	
 	public void setDead(boolean isDead){

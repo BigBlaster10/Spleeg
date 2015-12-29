@@ -32,5 +32,16 @@ game:
   preGameScoreboardEggsShot: '&a&lEggs Shot'
   preGameScoreboardBlocksDestroyed: '&a&lBlocks Destroyed'
   preGameScoreboardDeaths: '&a&lDeaths'
-  preGameScoreboardPointsAquired: '&a&lTotal Points'
-debug: true
+  preGameScoreboardPoints: '&a&lTotal Points'
+  timerEnd: '&aTime is up!'
+  gameRestart: '&aRestarting...'  
+  restartTime: 100
+bungee:
+  kickEnabled: false
+  kickServer: 'lobby'  
+mysql:
+  username: 'root'
+  password: 'pass'
+  url: 'jdbc:mysql://localhost:3306/splegg'
+  schema: 'splegg'
+  table: 'splegg'

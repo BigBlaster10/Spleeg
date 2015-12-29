@@ -39,17 +39,20 @@ public class SpleggListener implements Listener {
             return;
         if (!player.getItemInHand().getType().equals(Material.IRON_SPADE)) return;
 
+        if(!PlayerData.hasData(player)) return;
+        
         PlayerData data = PlayerData.getPlayerData(player);
+        if(!data.isInGame()) return;
         if (!data.canShoot()) return;
         if(data.isDead()) return;
         
-        if(!spleggMain.getHandler().getGameState().equals(GameState.INGAME)) return;
+        SpleggHandler handler = data.getSpleggHandler();
+        
+        if(!handler.getGameState().equals(GameState.INGAME)) return;
         Egg egg = (Egg) player.getWorld().spawnEntity(player.getEyeLocation(), EntityType.EGG);
         egg.setShooter(player);
         egg.setVelocity(player.getLocation().getDirection().multiply(1.3));
-        egg.setCustomName(player.getName());
-        
-        //player.getWorld().playSound(player.getLocation(), Sound., 1f, 1f);
+        egg.setCustomName(player.getName());        
         
         data.shoot();
 
@@ -57,31 +60,45 @@ public class SpleggListener implements Listener {
 
     @EventHandler
     public void onEntityDamageByEntityEvent(EntityDamageByEntityEvent event) {
-        event.setCancelled(true);
+        //event.setCancelled(true);
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        //event.setCancelled(true);
+        Player player = event.getPlayer();
+        if(!PlayerData.hasData(player)) return;
+
+    	event.setCancelled(true);
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        spleggMain.getHandler().playerJoin(player);
+        if(!PlayerData.hasData(player)) return;
+        SpleggHandler handler = PlayerData.getPlayerData(player).getSpleggHandler();
+        handler.playerJoin(player);
         event.setJoinMessage("");
     }
 
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        spleggMain.getHandler().playerQuit(player);
+        if(!PlayerData.hasData(player)) return;
+        SpleggHandler handler = PlayerData.getPlayerData(player).getSpleggHandler();
+       	handler.playerQuit(player);
         event.setQuitMessage("");
     }
 
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
 
+    	Entity entity = event.getEntity();
+    	if(entity.getCustomName() == null) return;
+        if(Bukkit.getPlayer(entity.getCustomName()) == null) return;
+        Player player = Bukkit.getPlayer(entity.getCustomName());
+        PlayerData data = PlayerData.getPlayerData(player);
+        if(!data.isInGame()) return;
+    	
         BlockIterator iterator = new BlockIterator(event.getEntity().getWorld(), event.getEntity().getLocation().toVector(), event.getEntity().getVelocity().normalize(), 0.0D, 4);
         Block block = null;
         while (iterator.hasNext()) {
@@ -94,12 +111,7 @@ public class SpleggListener implements Listener {
         Material mat = block.getType();
        
         if (mat.equals(Material.BEDROCK) || mat.equals(Material.SIGN) || mat.equals(Material.SIGN_POST) || mat.equals(Material.WALL_SIGN) || mat.equals(Material.BARRIER) || mat.equals(Material.SKULL))
-            return;
-        
-        Entity entity = event.getEntity();
-        if(Bukkit.getPlayer(entity.getCustomName()) == null) return;
-        Player player = Bukkit.getPlayer(entity.getCustomName());
-        PlayerData data = PlayerData.getPlayerData(player);
+            return;        
         
         data.getPlayerStats().addBlocksDestroyed();
         
@@ -110,12 +122,14 @@ public class SpleggListener implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        event.setCancelled(true);
+    	
+        //event.setCancelled(true);
     }
     
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event){
-    	event.setCancelled(true);
+    	if(event.getEntity() instanceof Player && PlayerData.hasData((Player) event.getEntity()) && PlayerData.getPlayerData((Player) event.getEntity()).isInGame())
+    		event.setCancelled(true);
     }
 
     

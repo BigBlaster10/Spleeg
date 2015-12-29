@@ -28,9 +28,9 @@ public class SpleggMain extends JavaPlugin {
 
     private World world;
     private WorldEditPlugin we;
-
+    
     private SpleggHandler handler;
-    private ConfigMessage configMessage;
+    
     
     @Override
     public void onEnable() {
@@ -63,7 +63,7 @@ public class SpleggMain extends JavaPlugin {
         Location lobbyLoc = getLocationFromConfig("lobby"); 
         
         Location mid = getLocationFromConfig("arena"); 
-        configMessage = new ConfigMessage(this.getConfig());
+        ConfigMessage configMessage = new ConfigMessage(this.getConfig());
 
         handler = new SpleggHandler(lobbyLoc, mid, 85, this.getConfig(), this, configMessage);
         
@@ -95,14 +95,6 @@ public class SpleggMain extends JavaPlugin {
         return world;
     }
 
-    public SpleggHandler getHandler() {
-        return handler;
-    }
-    
-    public void setHandler(SpleggHandler handler){
-    	this.handler = handler;
-    }
-
     public WorldEditPlugin getWorldEdit() {
         try {
             Plugin plugin = Bukkit.getPluginManager().getPlugin("WorldEdit");
@@ -111,7 +103,7 @@ public class SpleggMain extends JavaPlugin {
             }
             return we;
         } catch (Exception e) {
-            Bukkit.broadcastMessage(ChatColor.DARK_RED + ChatColor.BOLD.toString() + "Error: " + ChatColor.RED + "Failed to find WorldEdit");
+            Bukkit.broadcastMessage(ChatColor.DARK_RED + ChatColor.BOLD.toString() + "[Splegg] Error: " + ChatColor.RED + "Failed to find WorldEdit");
         }
         return null;
     }
@@ -121,28 +113,16 @@ public class SpleggMain extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            Random rand = new Random();
-            if(cmd.getName().equalsIgnoreCase("fw")){
-            	
-            	Firework fireWork = (Firework) player.getPlayer().getWorld().spawnEntity(player.getPlayer().getLocation(), EntityType.FIREWORK);
-                FireworkMeta meta = fireWork.getFireworkMeta();
-                
-                int r = rand.nextInt(256);
-                int g = rand.nextInt(256);
-                int b = rand.nextInt(256);
-
-                int r1 = rand.nextInt(256);
-                int g1 = rand.nextInt(256);
-                int b1 = rand.nextInt(256);
-                
-                FireworkEffect effect = FireworkEffect.builder().with(org.bukkit.FireworkEffect.Type.BALL).flicker(true).withColor(Color.fromRGB(r,g,b)).withColor(Color.fromRGB(r1,g1,b1)).withTrail().build();         
-                meta.addEffect(effect);
-                fireWork.setFireworkMeta(meta);
-            }
-           
+            Random rand = new Random();          
             
             if (cmd.getName().equalsIgnoreCase("vote") || cmd.getName().equalsIgnoreCase("v")) {
             	PlayerData data = PlayerData.getPlayerData(player);
+            	if(!data.isInGame()){
+            		player.sendMessage(this.getConfig().getString("game.voteNotInGameError"));
+            		return false;
+            	}
+            	SpleggHandler handler = data.getSpleggHandler();
+            	ConfigMessage configMessage = handler.getConfigMessage();
             	if(args.length < 1){
             		handler.getMapVote().sendVotingOptions(data, handler);
             		return false;
@@ -152,30 +132,21 @@ public class SpleggMain extends JavaPlugin {
             	try{            		
             		number = Integer.parseInt(args[0]);
             	}catch(Exception e){
-            		player.sendMessage(this.configMessage.getMessage(player, "game.voteError"));
+            		player.sendMessage(configMessage.getMessage("game.voteError"));
             		return false;
             	}
             	
             	
             	MapVote vote = handler.getMapVote();
             	if(number <= 0 || number > vote.getVotes().length){
-            		player.sendMessage(this.configMessage.getMessage(player, "game.voteError"));
+            		player.sendMessage(configMessage.getMessage("game.voteError"));
             		return false;
             	}            	
             	
             	handler.playerVote(player, number);            	
             }            	
             if (!player.isOp()) return false;
-            
-            if (cmd.getName().equalsIgnoreCase("start")) {
-                //String schem = args[0];
-            	
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    handler.playerJoin(p);
-                }
-
-                handler.startGame();
-            }
+      
                 //Schematic.loadArea(world, new File("plugins\\WorldEdit\\schematics\\" + schem + ".schematic"), player.getLocation(), true);
             if (cmd.getName().equalsIgnoreCase("splegg")) {
     			if(args.length == 0 || (args.length >= 1 && args[0].equals("help"))){
@@ -290,6 +261,8 @@ public class SpleggMain extends JavaPlugin {
         player.sendMessage(ChatColor.GREEN + "/splegg setSpawn <yaw> <pitch>" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Sets the lobby spawn");
         player.sendMessage(ChatColor.GREEN + "/splegg setArenaSpaawn <yaw> <pitch>" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Sets the arena spawn");
         player.sendMessage(ChatColor.GREEN + "/splegg join" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Join splegg");
+        player.sendMessage(ChatColor.GREEN + "/splegg createLobby" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Join splegg");
+        
         player.sendMessage(ChatColor.GREEN + "/splegg help" + ChatColor.GRAY + " | " + ChatColor.GOLD + "Shows this message");
         player.sendMessage(ChatColor.GRAY + "------------------------------------------");
     }
