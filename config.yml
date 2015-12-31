@@ -5,13 +5,14 @@ game:
   playerWinTitle: '&6&l%player% &aHas Won!'
   gameStartingMessage: '&aStarting in &6%int% &aseconds!'
   lastGameStartingMessage: '&aStarting in &61 &asecond!'
-  gameStartingTitle: '&aStarting in &6%int% &a...'
+  gameStartingTitle: '&aStarting in &6%int%&a...'
   gameStartTitle: '&a&lSplegg!'
   resetCountdown: '&aReseting countdown, not enough players'
   mapSelected: '&aThe map &6%string% &a has been selected!'
   playerDeath: '&6%player% &adied'
   vote: '&6%player% &a voted for &6%string%   &7|   &6%int% &a votes'
   voteError: '&a/vote #'
+  voteNotInGameError: '&1Error, you are not in a splegg game!'
   alreadyVoted: '&aYou have already voted!'
   voteEnded: '&aVoting has ended!'
   voteMenuHeader: '&7----------------------------'
@@ -36,12 +37,24 @@ game:
   timerEnd: '&aTime is up!'
   gameRestart: '&aRestarting...'  
   restartTime: 100
+  playerChat: '&7[%rank%&7] &7[%points%&7] &6%player% &7> %string%'
 bungee:
+  enabled: false
   kickEnabled: false
   kickServer: 'lobby'  
+points:
+  win: 370
+  participation: 125 
 mysql:
   username: 'root'
   password: 'pass'
   url: 'jdbc:mysql://localhost:3306/splegg'
   schema: 'splegg'
   table: 'splegg'
+ranks:
+  '0':
+    points: 0
+    name: '&7Private'
+  '1':
+    points: 5001
+    name: '&dCorporal'
