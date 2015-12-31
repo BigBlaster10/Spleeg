@@ -35,17 +35,17 @@ public class PreGameScoreboard extends SpleggScoreboard{
 		
 		Scoreboard board = manager.getNewScoreboard();
 		objective = board.registerNewObjective("test", "dummy");
-		objective.setDisplayName(configMessage.getMessage("game.preGameScoreboardHeader"));
+		objective.setDisplayName(configMessage.getMessage("game.preGameScoreboardHeader", handler));
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 			
 		PlayerData data = PlayerData.getPlayerData(player);
 		PlayerData.PlayerStats stat = data.getPlayerStats();
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardWins")).setScore(stat.getCurrentWins()); 
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardGamesPlayed")).setScore(stat.getCurrentGamesPlayed()); 
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardEggsShot")).setScore(stat.getCurrentEggsShot()); 
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardBlocksDestroyed")).setScore(stat.getCurrentBlocksDestroyed()); 
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardDeaths")).setScore(stat.getCurrentDeaths()); 
-		objective.getScore(configMessage.getMessage("game.preGameScoreboardPoints")).setScore(stat.getCurrentPoints()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardWins", handler)).setScore(stat.getCurrentWins()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardGamesPlayed", handler)).setScore(stat.getCurrentGamesPlayed()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardEggsShot", handler)).setScore(stat.getCurrentEggsShot()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardBlocksDestroyed", handler)).setScore(stat.getCurrentBlocksDestroyed()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardDeaths", handler)).setScore(stat.getCurrentDeaths()); 
+		objective.getScore(configMessage.getMessage("game.preGameScoreboardPoints", handler)).setScore(stat.getCurrentPoints()); 
 
 		
 		

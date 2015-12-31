@@ -22,9 +22,9 @@ public class InGameScoreboard extends SpleggScoreboard{
 		this.configMessage = configMessage;
 		createScoreboard();
 		
-		this.playersIdentifier = configMessage.getMessage("game.inGameScoreboardPlayersIdentifier");
-		this.eliminatedPlayersIdentifier = configMessage.getMessage("game.inGameScoreboardEliminatedIdentifier");
-		this.spectatorsIdentitifier = configMessage.getMessage("game.inGameScoreboardSpectatorsIdentifier");
+		this.playersIdentifier = configMessage.getMessage("game.inGameScoreboardPlayersIdentifier", handler);
+		this.eliminatedPlayersIdentifier = configMessage.getMessage("game.inGameScoreboardEliminatedIdentifier", handler);
+		this.spectatorsIdentitifier = configMessage.getMessage("game.inGameScoreboardSpectatorsIdentifier", handler);
 	}
 
 	@Override
@@ -33,18 +33,18 @@ public class InGameScoreboard extends SpleggScoreboard{
 		
 		board = manager.getNewScoreboard();
 		objective = board.registerNewObjective("test", "dummy");
-		objective.setDisplayName(configMessage.getMessage("game.inGameScoreboardHeader"));
+		objective.setDisplayName(configMessage.getMessage("game.inGameScoreboardHeader", handler));
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 		
-		objective.getScore(configMessage.getMessage("game.inGameScoreboardPlayers")).setScore(20); 
+		objective.getScore(configMessage.getMessage("game.inGameScoreboardPlayers", handler)).setScore(20); 
 
 		objective.getScore(" ").setScore(19); 
 		
-		objective.getScore(configMessage.getMessage("game.inGameScoreboardEliminated")).setScore(18); 
+		objective.getScore(configMessage.getMessage("game.inGameScoreboardEliminated", handler)).setScore(18); 
 
 		objective.getScore("  ").setScore(17); 		
 		
-		objective.getScore(configMessage.getMessage("game.inGameScoreboardSpectators")).setScore(16); 		
+		objective.getScore(configMessage.getMessage("game.inGameScoreboardSpectators", handler)).setScore(16); 		
 	 
 		objective.getScore("    ").setScore(15); 
 
@@ -52,28 +52,28 @@ public class InGameScoreboard extends SpleggScoreboard{
 
 	@Override
 	protected void updateScoreboard() {
-		objective.setDisplayName(configMessage.getMessage("game.inGameScoreboardHeader"));
+		objective.setDisplayName(configMessage.getMessage("game.inGameScoreboardHeader", handler));
 		for(String s : objective.getScoreboard().getEntries()){
 			if(s.toLowerCase().contains(playersIdentifier.toLowerCase())){
-				if((configMessage.getMessage("game.inGameScoreboardPlayers")).equals(s)) continue;
+				if((configMessage.getMessage("game.inGameScoreboardPlayers", handler)).equals(s)) continue;
 				int scoreInt = objective.getScore(s).getScore();
 				objective.getScoreboard().resetScores(s);
 
-				Score score = objective.getScore(configMessage.getMessage("game.inGameScoreboardPlayers")); 
+				Score score = objective.getScore(configMessage.getMessage("game.inGameScoreboardPlayers", handler)); 
 				score.setScore(scoreInt);			
 			}else if(s.toLowerCase().contains(spectatorsIdentitifier.toLowerCase())){
-				if(configMessage.getMessage("game.inGameScoreboardSpectators").equals(s)) continue;
+				if(configMessage.getMessage("game.inGameScoreboardSpectators", handler).equals(s)) continue;
 				int scoreInt = objective.getScore(s).getScore();
 				objective.getScoreboard().resetScores(s);
 
-				Score score = objective.getScore(configMessage.getMessage("game.inGameScoreboardSpectators")); 
+				Score score = objective.getScore(configMessage.getMessage("game.inGameScoreboardSpectators", handler)); 
 				score.setScore(scoreInt);			
 			}else if(s.toLowerCase().contains(eliminatedPlayersIdentifier.toLowerCase())){
-				if(configMessage.getMessage("game.inGameScoreboardEliminated").equals(s)) continue;
+				if(configMessage.getMessage("game.inGameScoreboardEliminated", handler).equals(s)) continue;
 				int scoreInt = objective.getScore(s).getScore();
 				objective.getScoreboard().resetScores(s);
 
-				Score score = objective.getScore(configMessage.getMessage("game.inGameScoreboardEliminated")); 
+				Score score = objective.getScore(configMessage.getMessage("game.inGameScoreboardEliminated", handler)); 
 				score.setScore(scoreInt);			
 			}
 		}

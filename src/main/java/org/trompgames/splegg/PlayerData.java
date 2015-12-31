@@ -9,7 +9,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import main.java.org.trompgames.splegg.RankData.Rank;
@@ -17,7 +17,7 @@ import main.java.org.trompgames.utils.Updateable;
 
 public class PlayerData extends Updateable{
 
-	public static final int SHOOTCOOLDOWN = 2;
+	public static int SHOOTCOOLDOWN = -1;
 
 	private SpleggHandler handler;
 	private Player player;
@@ -35,7 +35,7 @@ public class PlayerData extends Updateable{
 		super(1);
 		this.player = player;
 		this.playerStats = new PlayerStats(player);
-		this.rank = RankData.getRank(this);
+		this.rank = RankData.getRank(this);		
 		playerData.add(this);
 	}
 
@@ -83,6 +83,8 @@ public class PlayerData extends Updateable{
 		this.handler = handler;
 	}
 	
+
+	
 	public void setDead(boolean isDead){
 		this.getPlayerStats().addDeath();
 		player.getWorld().strikeLightning(player.getLocation());
@@ -94,10 +96,19 @@ public class PlayerData extends Updateable{
 		return cooldown <= 0;
 	}
 	
-	public void shoot(){
+	public void shoot(FileConfiguration config){
+		if(SHOOTCOOLDOWN == -1){
+			getShotCooldown(config);
+		}
 		this.cooldown = SHOOTCOOLDOWN;
 		this.playerStats.addEggsShot();
 	}
+	
+	public void getShotCooldown(FileConfiguration config){
+		SHOOTCOOLDOWN = config.getInt("game.shotCooldown");
+	}
+	
+	
 	
 	public PlayerStats getPlayerStats(){
 		return playerStats;

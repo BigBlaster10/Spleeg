@@ -22,11 +22,13 @@ public class MapVote {
 	private int[] votes;
 	private FileConfiguration config;
 	private ConfigMessage configMessage;
+	private SpleggHandler handler;
 	
-	public MapVote(FileConfiguration config, ConfigMessage configMessage){
+	public MapVote(FileConfiguration config, ConfigMessage configMessage, SpleggHandler handler){
 		this.config = config;
 		this.maps = getMapNames();
 		this.configMessage = configMessage;
+		this.handler = handler;
 		votes = new int[maps.size()];		
 	}
 	
@@ -41,20 +43,20 @@ public class MapVote {
 	public ArrayList<TextComponent> getVotingOptions(){
 		ArrayList<TextComponent> options = new ArrayList<TextComponent>();
 		
-		options.add(new TextComponent(this.configMessage.getMessage("game.voteMenuHeader")));
+		options.add(new TextComponent(this.configMessage.getMessage("game.voteMenuHeader", handler)));
 
 		//options.add(new TextComponent(ChatColor.GRAY + "-------------------------"));
 
-		options.add(new TextComponent(this.configMessage.getMessage("game.voteMenuInstructions")));
+		options.add(new TextComponent(this.configMessage.getMessage("game.voteMenuInstructions", handler)));
 		//options.add(new TextComponent(ChatColor.GREEN + "To vote click on a map or use /vote #"));
 		int i = 1;
 		for(String map : maps){
 									
 			//String s = ChatColor.GRAY + "[" + ChatColor.GOLD + i + ChatColor.GRAY + "]  " + ChatColor.GOLD + map + ChatColor.GRAY + "   |   " + ChatColor.GOLD + votes[i-1] + ChatColor.GREEN + " votes";
-			String s = this.configMessage.getMessage(map, this, i, "game.voteMenuMap");
+			String s = this.configMessage.getMessage(map, this, i, "game.voteMenuMap", handler);
 			TextComponent text = new TextComponent(s);
 			
-			ComponentBuilder hoverText = new ComponentBuilder(this.configMessage.getMessage(map, "game.voteMenuHover"));
+			ComponentBuilder hoverText = new ComponentBuilder(this.configMessage.getMessage(map, "game.voteMenuHover", handler));
 			//ComponentBuilder hoverText = new ComponentBuilder("Click to vote for " + map);
 			//hoverText.color(ChatColor.GREEN);
 			
@@ -65,7 +67,7 @@ public class MapVote {
 			
 			i++;
 		}
-		options.add(new TextComponent(this.configMessage.getMessage("game.voteMenuFooter")));
+		options.add(new TextComponent(this.configMessage.getMessage("game.voteMenuFooter", handler)));
 		
 		return options;
 	}
@@ -74,7 +76,7 @@ public class MapVote {
 		if(handler.getGameState().equals(SpleggHandler.GameState.PREGAME)){			
 			sendVotingOptions(data.getPlayer());
 		}else{
-			data.getPlayer().sendMessage(this.configMessage.getMessage("game.voteEnded"));
+			data.getPlayer().sendMessage(this.configMessage.getMessage("game.voteEnded", handler));
 
 			//data.getPlayer().sendMessage(ChatColor.GREEN + "Game has already started!");
 		}
@@ -90,24 +92,26 @@ public class MapVote {
 	
 	public void playerVote(Player player, int number, SpleggHandler handler){
 		if(handler.getMap() != null){
-    		player.sendMessage(this.configMessage.getMessage(player, "game.voteEnded"));
+    		player.sendMessage(this.configMessage.getMessage(player, "game.voteEnded", handler));
     		return;
 		}
 			
 		if(number <= 0 || number > getVotes().length){
-    		player.sendMessage(this.configMessage.getMessage(player, "game.voteError"));
+    		player.sendMessage(this.configMessage.getMessage(player, "game.voteError", handler));
     		return;
     	}
 		PlayerData data = PlayerData.getPlayerData(player);
 		if(data.hasVoted()){
-			data.getPlayer().sendMessage(this.configMessage.getMessage("game.alreadyVoted"));
+			data.getPlayer().sendMessage(this.configMessage.getMessage("game.alreadyVoted", handler));
 			//data.getPlayer().sendMessage(ChatColor.GREEN + "You have allready voted!");
 			return;
 		}
 		
 		data.setVoted(true);
 		votes[number-1] += 1;
-		Bukkit.broadcastMessage(this.configMessage.getMessage(player, maps.get(number-1), votes[number-1], "game.vote"));
+		for(PlayerData d : handler.getPlayers()){
+			d.getPlayer().sendMessage(this.configMessage.getMessage(player, maps.get(number-1), votes[number-1], "game.vote", handler));
+		}
 		//Bukkit.broadcastMessage(ChatColor.GOLD + player.getName() + ChatColor.GREEN + " voted for " + ChatColor.GOLD + maps.get((number-1)) + ChatColor.GRAY + "   |   " + ChatColor.GOLD + votes[number-1] + ChatColor.GREEN + " votes");
 		//player.sendMessage(ChatColor.GREEN + "You voted for " + maps.get(number-1));
 	}

@@ -47,12 +47,13 @@ public class SpleggHandler extends Updateable{
 	private World world;
 	private Location lobbyLocation;
 	private Location mid;
-	private int y;
+	private double y;
 	
 	private SpleggMap map;
 	private MapVote mapVote;
 	private FileConfiguration config;
     private ConfigMessage configMessage;
+    private String configName;
 
     private SpleggScoreboard spleggScoreboard;
     
@@ -60,11 +61,13 @@ public class SpleggHandler extends Updateable{
 	
 	ArrayList<PlayerData> players = new ArrayList<>();
 	
+	public static ArrayList<SpleggHandler> handlers = new ArrayList<SpleggHandler>();
+	
 	public void restart(){
-		sendMessage(this.configMessage.getMessage("game.gameRestart"));
+		sendMessage(this.configMessage.getMessage("game.gameRestart", this));
 		PlayerStats.saveStats();
 		gameState = GameState.PREGAME;
-		this.mapVote = new MapVote(config, configMessage);
+		this.mapVote = new MapVote(config, configMessage, this);
 
 		ArrayList<PlayerData> datas = (ArrayList<PlayerData>) players.clone();
 		players.clear();
@@ -97,18 +100,20 @@ public class SpleggHandler extends Updateable{
 		Schematic.loadArea(plugin, world, new File("plugins\\WorldEdit\\schematics\\clear.schematic"), mid, true);
 	}
 	
-	protected SpleggHandler(Location lobbyLocation, Location mid, int y, FileConfiguration config, SpleggMain plugin, ConfigMessage configMessage){
+	protected SpleggHandler(Location lobbyLocation, Location mid, double y, String configName, FileConfiguration config, SpleggMain plugin, ConfigMessage configMessage){
 		super(1);
 		this.lobbyLocation = lobbyLocation;
 		this.world = lobbyLocation.getWorld();
 		this.mid = mid;
 		this.y = y;
-		this.mapVote = new MapVote(config, configMessage);
+		this.mapVote = new MapVote(config, configMessage, this);
 		this.config = config;
 		this.plugin = plugin;
 		this.configMessage = configMessage;
 		this.spleggScoreboard = new PreGameScoreboard(this, configMessage);
+		this.configName = configName;
 		Schematic.loadArea(plugin, world, new File("plugins\\WorldEdit\\schematics\\clear.schematic"), mid, true);
+		handlers.add(this);
 	}
 
 	private int ticks = 0;
@@ -152,7 +157,7 @@ public class SpleggHandler extends Updateable{
 		Player player = data.getPlayer();		
 		player.setGameMode(GameMode.CREATIVE);
 		//Bukkit.broadcastMessage(ChatColor.GOLD + player.getName() + ChatColor.GREEN + " Died");
-		sendMessage(this.getConfigMessage().getMessage(player, "game.playerDeath"));
+		sendMessage(this.getConfigMessage().getMessage(player, "game.playerDeath", this));
 		data.setDead(true);
 		data.getPlayerStats().addPoints(config.getInt("points.participation"));
 		for(PlayerData p : players){
@@ -166,7 +171,7 @@ public class SpleggHandler extends Updateable{
 			if(preGameSeconds != COUNTDOWNSECONDS){
 				preGameSeconds = COUNTDOWNSECONDS;
 				//Bukkit.broadcastMessage(ChatColor.GREEN + "Reseting countdown");
-				sendMessage(this.getConfigMessage().getMessage("game.resetCountdown"));
+				sendMessage(this.getConfigMessage().getMessage("game.resetCountdown", this));
 
 			}
 			return;		
@@ -174,7 +179,7 @@ public class SpleggHandler extends Updateable{
 		if(preGameSeconds == 10){
 			map = mapVote.getWinner(world);
 			map.loadMap(plugin, mid);
-			sendMessage(this.getConfigMessage().getMessage(map.getMapName(), "game.mapSelected"));
+			sendMessage(this.getConfigMessage().getMessage(map.getMapName(), "game.mapSelected", this));
 
 			//Bukkit.broadcastMessage(ChatColor.GREEN + "The map " + ChatColor.GOLD + map.getMapName() + ChatColor.GREEN + " has been selected!");
 		}
@@ -194,11 +199,11 @@ public class SpleggHandler extends Updateable{
 		}
 		if(preGameSeconds == 1)
 			//Bukkit.broadcastMessage(ChatColor.GREEN + "Starting in " + ChatColor.GOLD + preGameSeconds + ChatColor.GREEN + " second!");
-			sendMessage(this.getConfigMessage().getMessage("game.lastGameStartingMessage"));
+			sendMessage(this.getConfigMessage().getMessage("game.lastGameStartingMessage", this));
 
 		else
 			//Bukkit.broadcastMessage(ChatColor.GREEN + "Starting in " + ChatColor.GOLD + preGameSeconds + ChatColor.GREEN + " seconds!");
-			sendMessage(this.getConfigMessage().getMessage(preGameSeconds, "game.gameStartingMessage"));
+			sendMessage(this.getConfigMessage().getMessage(preGameSeconds, "game.gameStartingMessage", this));
 
 	}
 
@@ -206,7 +211,7 @@ public class SpleggHandler extends Updateable{
 	public void inGameUpdate(){
 		if(inGameTime <= 0){
 			inGameTime = 0;
-			sendMessage(this.getConfigMessage().getMessage("game.timerEnd"));
+			sendMessage(this.getConfigMessage().getMessage("game.timerEnd", this));
 			SpleggHandler handler = this;
 			Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 	            @Override
@@ -238,7 +243,7 @@ public class SpleggHandler extends Updateable{
 	
 	public void gameStartingTitle(){
 		for(PlayerData player : players){
-			String title = this.getConfigMessage().getMessage(this.inGameCountdown, "game.gameStartingTitle");
+			String title = this.getConfigMessage().getMessage(this.inGameCountdown, "game.gameStartingTitle", this);
 			//player.getPlayer().playSound(player.getPlayer().getLocation(), Sound.NOTE_STICKS, 1f, 0.25f);
 			player.getPlayer().playSound(player.getPlayer().getLocation(), Sound.NOTE_PLING, 1f, 0.5f);
 
@@ -248,7 +253,7 @@ public class SpleggHandler extends Updateable{
 	
 	public void gameStartTitle(){
 		for(PlayerData player : players){
-			String title = this.getConfigMessage().getMessage("game.gameStartTitle");
+			String title = this.getConfigMessage().getMessage("game.gameStartTitle", this);
 			player.getPlayer().playSound(player.getPlayer().getLocation(), Sound.NOTE_PLING, 1f, 1f);
 
 			TitleAPI.sendFullTitle(player.getPlayer(), 0, 10, 10, ChatColor.GREEN + "" + ChatColor.BOLD + "Splegg!", "");
@@ -271,6 +276,10 @@ public class SpleggHandler extends Updateable{
 	}
 	
 	public void playerJoin(Player player){
+		if(players.size() + 1 >= maxPlayers){
+			player.sendMessage(ChatColor.RED + "Error: Server full");
+			return;
+		}
 		player.setSaturation(100000000);
 		player.setFoodLevel(20);
 		player.getInventory().clear();
@@ -281,7 +290,7 @@ public class SpleggHandler extends Updateable{
 			player.setGameMode(GameMode.ADVENTURE);
 			if(!players.contains(data)) players.add(data);			
 			player.teleport(lobbyLocation);
-			sendMessage(this.getConfigMessage().getMessage(player, "game.playerJoin"));
+			sendMessage(this.getConfigMessage().getMessage(player, "game.playerJoin", this));
 			spleggScoreboard.addPlayer(player);
 
 			//Bukkit.broadcastMessage(ChatColor.GREEN + "➣ " + ChatColor.GOLD + player.getName() + ChatColor.GREEN + " has joined. " + ChatColor.GRAY + "[" + ChatColor.GOLD + players.size() + "/" + maxPlayers + ChatColor.GRAY + "]");
@@ -297,7 +306,7 @@ public class SpleggHandler extends Updateable{
 	public void playerQuit(Player player){
 		players.remove(PlayerData.getPlayerData(player));
 		if(gameState.equals(GameState.PREGAME)){
-			sendMessage(this.getConfigMessage().getMessage(player, "game.playerQuit"));
+			sendMessage(this.getConfigMessage().getMessage(player, "game.playerQuit", this));
 		}else if(!PlayerData.getPlayerData(player).isDead()){
 			PlayerData.getPlayerData(player).setDead(true);
 		}
@@ -346,13 +355,24 @@ public class SpleggHandler extends Updateable{
 		return seconds;
 	}
 	
+	public static ArrayList<SpleggHandler> getSpleggHandlers(){
+		return handlers;
+	}
+	
+	public static SpleggHandler getSpleggHandler(String name){
+		for(SpleggHandler handler : handlers){
+			if(name.equals(handler.configName)) return handler;
+		}
+		return null;
+	}
+	
 	boolean won = false;
 	public void win(PlayerData data){
 		if(won) return;
 		won = true;
 		gameState = GameState.OVER;
 		data.getPlayerStats().addWin();
-		String title = this.getConfigMessage().getMessage(data.getPlayer(), "game.playerWinTitle");
+		String title = this.getConfigMessage().getMessage(data.getPlayer(), "game.playerWinTitle", this);
 		data.getPlayer().setGameMode(GameMode.CREATIVE);
 		data.getPlayerStats().addPoints(config.getInt("points.participation"));
 		data.getPlayerStats().addPoints(config.getInt("points.win"));

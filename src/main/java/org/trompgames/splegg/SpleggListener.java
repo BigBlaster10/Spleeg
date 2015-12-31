@@ -1,5 +1,8 @@
 package main.java.org.trompgames.splegg;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -18,6 +21,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -30,18 +34,32 @@ public class SpleggListener implements Listener {
     private SpleggMain spleggMain;
     private ConfigMessage configMessage;
     
+    private double eggSpeed;
+    private ArrayList<Material> unbreakable = new ArrayList<>();
+    
     public SpleggListener(SpleggMain spleggMain, ConfigMessage configMessage) {
         this.spleggMain = spleggMain;
         this.configMessage = configMessage;
+        
+        this.eggSpeed = spleggMain.getConfig().getDouble("game.eggSpeed");
+        List<Integer> unbreak = (List<Integer>) spleggMain.getConfig().getList("unbreakable");
+        for(int un : unbreak){
+        	unbreakable.add(Material.getMaterial(un));
+        }
     }
 
-    
+    @EventHandler
+    public void onItemDrop(PlayerDropItemEvent event){
+    	Player player = event.getPlayer();
+    	if(!PlayerData.hasData(player) || !PlayerData.getPlayerData(player).isInGame()) return;
+    	event.setCancelled(true);
+    }
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event){
     	Player player = event.getPlayer();
     	
     	if(!PlayerData.hasData(player) || !PlayerData.getPlayerData(player).isInGame()) return;
-    	String s = configMessage.getMessage(player, event.getMessage(), 0, "game.playerChat");
+    	String s = configMessage.getMessage(player, event.getMessage(), 0, "game.playerChat", PlayerData.getPlayerData(player).getSpleggHandler());
     	event.setCancelled(true);
     	for(PlayerData data : PlayerData.getPlayerData(player).getSpleggHandler().getPlayers()){
     		data.getPlayer().sendMessage(s);
@@ -69,11 +87,9 @@ public class SpleggListener implements Listener {
         if(!handler.getGameState().equals(GameState.INGAME)) return;
         Egg egg = (Egg) player.getWorld().spawnEntity(player.getEyeLocation(), EntityType.EGG);
         egg.setShooter(player);
-        egg.setVelocity(player.getLocation().getDirection().multiply(1.3));
+        egg.setVelocity(player.getLocation().getDirection().multiply(eggSpeed));
         egg.setCustomName(player.getName());        
-        
-        data.shoot();
-
+        data.shoot(spleggMain.getConfig());
     }
 
     @EventHandler
@@ -92,8 +108,10 @@ public class SpleggListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if(!PlayerData.hasData(player)) return;
-        SpleggHandler handler = PlayerData.getPlayerData(player).getSpleggHandler();
+       
+        if(!spleggMain.isBungeeCord()) return;
+        
+        SpleggHandler handler = spleggMain.getBungeeSpleggHandler();
         handler.playerJoin(player);
         event.setJoinMessage("");
     }
@@ -128,8 +146,7 @@ public class SpleggListener implements Listener {
         if (block == null) return;
         Material mat = block.getType();
        
-        if (mat.equals(Material.BEDROCK) || mat.equals(Material.SIGN) || mat.equals(Material.SIGN_POST) || mat.equals(Material.WALL_SIGN) || mat.equals(Material.BARRIER) || mat.equals(Material.SKULL))
-            return;        
+        if(unbreakable.contains(mat)) return;      
         
         data.getPlayerStats().addBlocksDestroyed();
         
@@ -138,6 +155,8 @@ public class SpleggListener implements Listener {
 
     }
 
+    
+    
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
     	if(event.getSpawnReason().equals(SpawnReason.EGG))
