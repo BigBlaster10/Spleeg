@@ -76,7 +76,10 @@ public class ConfigMessage {
 	
 	public String getMessage(Player player, String string, int integer, String path){
 		String s = StringEscapeUtils.unescapeJava(config.getString(path));
+		PlayerData data = PlayerData.getPlayerData(player);
 		s = s.replaceAll("%player%", player.getName());
+		s = s.replaceAll("%rank%", data.getRank().getName());
+		s = s.replaceAll("%points%", "" + data.getRank().getPoints());
 		s = s.replaceAll("%int%", "" + integer);
 		s = s.replaceAll("%string%", "" + string);
 

@@ -21,6 +21,7 @@ import com.connorlinfoot.titleapi.TitleAPI;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
+import main.java.org.trompgames.splegg.PlayerData.PlayerStats;
 import main.java.org.trompgames.utils.MapVote;
 import main.java.org.trompgames.utils.Schematic;
 import main.java.org.trompgames.utils.SpleggMap;
@@ -61,13 +62,16 @@ public class SpleggHandler extends Updateable{
 	
 	public void restart(){
 		sendMessage(this.configMessage.getMessage("game.gameRestart"));
-		PlayerData.PlayerStats.saveStats();
-		PlayerData.getPlayerData().clear();
+		PlayerStats.saveStats();
 		gameState = GameState.PREGAME;
+		this.mapVote = new MapVote(config, configMessage);
 
 		ArrayList<PlayerData> datas = (ArrayList<PlayerData>) players.clone();
 		players.clear();
-		
+		for(int i = datas.size()-1; i >= 0; i--){
+			datas.get(i).remove();
+		}
+
 		if(config.getBoolean("bungee.enabled") && config.getBoolean("bungee.kickEnabled")){
 			for(Player player: Bukkit.getOnlinePlayers()){
 				ByteArrayDataOutput out = ByteStreams.newDataOutput();
@@ -86,7 +90,6 @@ public class SpleggHandler extends Updateable{
 		this.inGameCountdown = INGAMECOUNTDOWN;
 		this.inGameTime = INGAMETIME;
 		this.won = false;
-		this.mapVote = new MapVote(config, configMessage);
 		this.spleggScoreboard = new PreGameScoreboard(this, configMessage);
 		for(PlayerData data : players){
 			spleggScoreboard.addPlayer(data.getPlayer());
@@ -151,6 +154,7 @@ public class SpleggHandler extends Updateable{
 		//Bukkit.broadcastMessage(ChatColor.GOLD + player.getName() + ChatColor.GREEN + " Died");
 		sendMessage(this.getConfigMessage().getMessage(player, "game.playerDeath"));
 		data.setDead(true);
+		data.getPlayerStats().addPoints(config.getInt("points.participation"));
 		for(PlayerData p : players){
 			p.getPlayer().hidePlayer(player);
 		}
@@ -343,21 +347,23 @@ public class SpleggHandler extends Updateable{
 	}
 	
 	boolean won = false;
-	public void win(PlayerData player){
+	public void win(PlayerData data){
 		if(won) return;
 		won = true;
 		gameState = GameState.OVER;
-		player.getPlayerStats().addWin();
-		String title = this.getConfigMessage().getMessage(player.getPlayer(), "game.playerWinTitle");
-		player.getPlayer().setGameMode(GameMode.CREATIVE);
-		for(PlayerData data : players){			
-			TitleAPI.sendFullTitle(data.getPlayer(), 10, 120, 20, title, "");
+		data.getPlayerStats().addWin();
+		String title = this.getConfigMessage().getMessage(data.getPlayer(), "game.playerWinTitle");
+		data.getPlayer().setGameMode(GameMode.CREATIVE);
+		data.getPlayerStats().addPoints(config.getInt("points.participation"));
+		data.getPlayerStats().addPoints(config.getInt("points.win"));
+		for(PlayerData d : players){			
+			TitleAPI.sendFullTitle(d.getPlayer(), 10, 120, 20, title, "");
 		}
 		
-		for(PlayerData data : players){
+		for(PlayerData dat : players){
 			for(PlayerData d : players){
-				if(!d.getPlayer().equals(data.getPlayer()))
-					d.getPlayer().showPlayer(data.getPlayer());
+				if(!d.getPlayer().equals(dat.getPlayer()))
+					d.getPlayer().showPlayer(dat.getPlayer());
 			}
 		}
 		SpleggHandler handler = this;

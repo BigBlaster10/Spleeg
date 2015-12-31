@@ -13,9 +13,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -26,11 +28,27 @@ import main.java.org.trompgames.splegg.SpleggHandler.GameState;
 public class SpleggListener implements Listener {
 
     private SpleggMain spleggMain;
-
-    public SpleggListener(SpleggMain spleggMain) {
+    private ConfigMessage configMessage;
+    
+    public SpleggListener(SpleggMain spleggMain, ConfigMessage configMessage) {
         this.spleggMain = spleggMain;
+        this.configMessage = configMessage;
     }
 
+    
+    @EventHandler
+    public void onPlayerChat(AsyncPlayerChatEvent event){
+    	Player player = event.getPlayer();
+    	
+    	if(!PlayerData.hasData(player) || !PlayerData.getPlayerData(player).isInGame()) return;
+    	String s = configMessage.getMessage(player, event.getMessage(), 0, "game.playerChat");
+    	event.setCancelled(true);
+    	for(PlayerData data : PlayerData.getPlayerData(player).getSpleggHandler().getPlayers()){
+    		data.getPlayer().sendMessage(s);
+    	}
+    	
+    }
+    
     @EventHandler
     public void onPlayerClick(PlayerInteractEvent event) {
         Player player = event.getPlayer();
@@ -122,8 +140,8 @@ public class SpleggListener implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-    	
-        //event.setCancelled(true);
+    	if(event.getSpawnReason().equals(SpawnReason.EGG))
+          event.setCancelled(true);
     }
     
     @EventHandler

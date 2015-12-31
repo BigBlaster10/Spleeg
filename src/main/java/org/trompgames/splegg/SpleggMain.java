@@ -20,6 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 
+import main.java.org.trompgames.splegg.PlayerData.PlayerStats;
 import main.java.org.trompgames.utils.MapVote;
 import main.java.org.trompgames.utils.Updateable;
 import net.md_5.bungee.api.ChatColor;
@@ -36,13 +37,13 @@ public class SpleggMain extends JavaPlugin {
     public void onEnable() {
         world = Bukkit.getWorlds().get(0);
 
-        Bukkit.getServer().getPluginManager().registerEvents(new SpleggListener(this), this);
 
         Bukkit.broadcastMessage(ChatColor.AQUA + "Splegg Initialized...");
         getWorldEdit();
         
         this.saveDefaultConfig();
 
+        RankData.loadData(this.getConfig());
         
         String url = this.getConfig().getString("mysql.url");
         String user = this.getConfig().getString("mysql.username");
@@ -67,6 +68,8 @@ public class SpleggMain extends JavaPlugin {
 
         handler = new SpleggHandler(lobbyLoc, mid, 85, this.getConfig(), this, configMessage);
         
+        Bukkit.getServer().getPluginManager().registerEvents(new SpleggListener(this, configMessage), this);
+
         configMessage.setHandler(handler);
         
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, Updateable::updateUpdateables, 0L, 1L);
@@ -158,6 +161,10 @@ public class SpleggMain extends JavaPlugin {
     			
     			case "join":
     				handler.playerJoin(player);
+    				return true;
+    			case "points":
+    				PlayerData.getPlayerData(player).getPlayerStats().addPoints(Integer.parseInt(args[1]));
+    				PlayerStats.saveStats();
     				return true;
     			case "joinall":
     				for(Player p : Bukkit.getOnlinePlayers()){

@@ -12,6 +12,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import main.java.org.trompgames.splegg.RankData.Rank;
 import main.java.org.trompgames.utils.Updateable;
 
 public class PlayerData extends Updateable{
@@ -21,7 +22,7 @@ public class PlayerData extends Updateable{
 	private SpleggHandler handler;
 	private Player player;
 	private boolean isDead = false;
-	
+	private Rank rank;
 	private boolean hasVoted = false;
 	
 	private int cooldown = 0;
@@ -34,8 +35,10 @@ public class PlayerData extends Updateable{
 		super(1);
 		this.player = player;
 		this.playerStats = new PlayerStats(player);
+		this.rank = RankData.getRank(this);
 		playerData.add(this);
 	}
+
 	
 	public static PlayerData getPlayerData(Player player){
 		for(PlayerData data : playerData){
@@ -98,6 +101,15 @@ public class PlayerData extends Updateable{
 	
 	public PlayerStats getPlayerStats(){
 		return playerStats;
+	}
+	
+	public Rank getRank(){
+		return rank;	
+	}
+	
+	public void remove(){
+		playerData.remove(this);
+		PlayerStats.stats.remove(playerStats);
 	}
 	
 	@Override
@@ -292,7 +304,7 @@ public class PlayerData extends Updateable{
 		}
 		
 		public void addPoints(int points){
-			points += points;
+			this.points += points;
 		}
 		
 		public void addWin(){
