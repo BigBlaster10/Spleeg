@@ -25,7 +25,7 @@ public class SpleggMap {
 	
 	private void getData(){
 		mapName = config.getString("map." + mapId + ".name");
-		file = new File("plugins\\WorldEdit\\schematics\\" + config.getString("map." + mapId + ".schem") + ".schematic");
+		file = new File("plugins/WorldEdit/schematics/" + config.getString("map." + mapId + ".schem") + ".schematic");
 	}
 	
 	public void loadMap(SpleggMain plugin, Location loc){

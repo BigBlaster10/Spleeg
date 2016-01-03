@@ -3,32 +3,25 @@ package main.java.org.trompgames.splegg;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.Set;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 
 import main.java.org.trompgames.splegg.PlayerData.PlayerStats;
+import main.java.org.trompgames.utils.BungeePing;
 import main.java.org.trompgames.utils.MapVote;
 import main.java.org.trompgames.utils.Updateable;
 import net.md_5.bungee.api.ChatColor;
 
 public class SpleggMain extends JavaPlugin {
 
-    private World world;
     private WorldEditPlugin we;
     
     private SpleggHandler handler;
@@ -36,10 +29,8 @@ public class SpleggMain extends JavaPlugin {
     
     @Override
     public void onEnable() {
-        world = Bukkit.getWorlds().get(0);
 
 
-        Bukkit.broadcastMessage(ChatColor.AQUA + "Splegg Initialized...");
         getWorldEdit();
         
         this.saveDefaultConfig();
@@ -93,7 +84,11 @@ public class SpleggMain extends JavaPlugin {
             bungee = true;
             handler = new SpleggHandler(lobbyLoc, mid, y, defaultName, this.getConfig(), this, configMessage);
             Bukkit.broadcastMessage(ChatColor.GREEN + "[" + ChatColor.GOLD + "Splegg" + ChatColor.GREEN + "] Map: " + ChatColor.AQUA + defaultName + ChatColor.GREEN + " has been initialized");
-
+            
+            
+            this.getServer().getMessenger().registerOutgoingPluginChannel(this, this.getConfig().getString("bungee.pluginChannel"));
+    	    this.getServer().getMessenger().registerIncomingPluginChannel(this, this.getConfig().getString("bungee.pluginChannel"), new BungeePing(this));
+    	    Bukkit.broadcastMessage("Registered plugin channel: " + this.getConfig().getString("bungee.pluginChannel"));
         }else{        	
         	for(String defaultName : this.getConfig().getConfigurationSection("lobby").getKeys(false)){
         		double y = this.getConfig().getDouble("lobby." + defaultName + ".y");
@@ -114,7 +109,8 @@ public class SpleggMain extends JavaPlugin {
         
         Bukkit.getServer().getPluginManager().registerEvents(new SpleggListener(this, configMessage), this);
 
-        
+        Bukkit.broadcastMessage(ChatColor.AQUA + "Splegg Initialized...");
+
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, Updateable::updateUpdateables, 0L, 1L);
 
 
@@ -139,11 +135,11 @@ arena:
     	double x = this.getConfig().getDouble(path + ".x");
     	double y = this.getConfig().getDouble(path + ".y");
     	double z = this.getConfig().getDouble(path + ".z");
-
+    	String world = this.getConfig().getString(path + ".world");
         double yaw = this.getConfig().getDouble(path + ".yaw");
         double pitch = this.getConfig().getDouble(path + ".pitch");
 
-        Location loc = new Location(world, x, y, z);
+        Location loc = new Location(Bukkit.getWorld(world), x, y, z);
         
         loc.setYaw((float) yaw);
         loc.setPitch((float) pitch);
@@ -152,9 +148,7 @@ arena:
     	
     }
 
-    public World getWorld() {
-        return world;
-    }
+
 
     public SpleggHandler getBungeeSpleggHandler(){
     	return handler;
@@ -376,6 +370,7 @@ arena:
         this.getConfig().set("lobby." + lobby + ".spawn.x", 1.0 * loc.getBlockX() + 0.5);
         this.getConfig().set("lobby." + lobby + ".spawn.y", 1.0 * loc.getBlockY() + 0.5);
         this.getConfig().set("lobby." + lobby + ".spawn.z", 1.0 * loc.getBlockZ() + 0.5);
+        this.getConfig().set("lobby." + lobby + ".spawn.world", loc.getWorld().getName());
 
         this.getConfig().set("lobby." + lobby + ".spawn.yaw", yaw);
         this.getConfig().set("lobby." + lobby + ".spawn.pitch", pitch);
@@ -389,7 +384,8 @@ arena:
         this.getConfig().set("lobby." + lobby + ".arena.x", 1.0 * loc.getBlockX() + 0.5);
         this.getConfig().set("lobby." + lobby + ".arena.y", 1.0 * loc.getBlockY() + 0.5);
         this.getConfig().set("lobby." + lobby + ".arena.z", 1.0 * loc.getBlockZ() + 0.5);
-
+        this.getConfig().set("lobby." + lobby + ".arena.world", loc.getWorld().getName());
+        
         this.getConfig().set("lobby." + lobby + ".arena.yaw", yaw);
         this.getConfig().set("lobby." + lobby + ".arena.pitch", pitch);
 

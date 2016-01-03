@@ -22,8 +22,10 @@ public class Schematic {
 		try {
 	        MCEditSchematicFormat.getFormat(file).load(file).paste(session, new Vector(loc.getX(), loc.getY(), loc.getZ()), !withAir);
 	    } catch (Exception e) {
-			Bukkit.broadcastMessage(ChatColor.DARK_RED + "" +  ChatColor.BOLD + "Error: " + ChatColor.RED + "Failed to paste schematic: " + file.getName());
-	        e.printStackTrace();
+			//Bukkit.broadcastMessage(ChatColor.DARK_RED + "" +  ChatColor.BOLD + "Error: " + ChatColor.RED + "Failed to paste schematic: " + file.getName());
+	    	System.out.println(ChatColor.DARK_RED + "" +  ChatColor.BOLD + "Error: " + ChatColor.RED + "Failed to paste schematic: " + file.getName());
+	    	System.out.println("99% of the time this is fine");
+	        //e.printStackTrace();
 	    }
 		session.flushQueue();	   
 	}

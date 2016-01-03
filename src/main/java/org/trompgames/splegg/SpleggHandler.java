@@ -74,6 +74,8 @@ public class SpleggHandler extends Updateable{
 		for(int i = datas.size()-1; i >= 0; i--){
 			datas.get(i).remove();
 		}
+		
+		sendUpdate();
 
 		if(config.getBoolean("bungee.enabled") && config.getBoolean("bungee.kickEnabled")){
 			for(Player player: Bukkit.getOnlinePlayers()){
@@ -97,7 +99,30 @@ public class SpleggHandler extends Updateable{
 		for(PlayerData data : players){
 			spleggScoreboard.addPlayer(data.getPlayer());
 		}
-		Schematic.loadArea(plugin, world, new File("plugins\\WorldEdit\\schematics\\clear.schematic"), mid, true);
+		Schematic.loadArea(plugin, world, new File("plugins/WorldEdit/schematics/clear.schematic"), mid, true);
+	}
+	
+	
+	private void sendUpdate(){
+		String sentServer = config.getString("bungee.kickServer");
+		//Bukkit.broadcastMessage("Sent server: " + sentServer);
+
+		try{
+			ByteArrayDataOutput out = ByteStreams.newDataOutput();
+			out.writeUTF("getStats");
+			out.writeUTF(sentServer);
+			out.writeUTF(config.getString("bungee.serverName"));
+			
+			out.writeInt(getPlayers().size());
+			out.writeInt(getMaxPlayers());
+			out.writeUTF(getGameState().toString());
+			out.writeUTF("Voting...");
+			
+			Bukkit.getOnlinePlayers().iterator().next().sendPluginMessage(plugin, config.getString("bungee.pluginChannel"), out.toByteArray());
+		}catch(Exception e){
+			Bukkit.broadcastMessage("[Splegg] error -.-");
+			e.printStackTrace();
+		}				
 	}
 	
 	protected SpleggHandler(Location lobbyLocation, Location mid, double y, String configName, FileConfiguration config, SpleggMain plugin, ConfigMessage configMessage){
@@ -112,7 +137,7 @@ public class SpleggHandler extends Updateable{
 		this.configMessage = configMessage;
 		this.spleggScoreboard = new PreGameScoreboard(this, configMessage);
 		this.configName = configName;
-		Schematic.loadArea(plugin, world, new File("plugins\\WorldEdit\\schematics\\clear.schematic"), mid, true);
+		Schematic.loadArea(plugin, world, new File("plugins/WorldEdit/schematics/clear.schematic"), mid, true);
 		handlers.add(this);
 	}
 
@@ -124,7 +149,15 @@ public class SpleggHandler extends Updateable{
 		else if(gameState.equals(GameState.INGAME) && ticks == 20) inGameUpdate();
 		if(gameState.equals(GameState.INGAME)){
 			for(PlayerData player : players){
-				if(player.isDead()) continue;
+				if(player.isDead()){
+					if(player.getPlayer().getLocation().getBlockY() <= y){
+						player.getPlayer().teleport(mid);
+						player.getPlayer().setFallDistance(0);
+						player.getPlayer().setFlying(true);
+
+					}
+					continue;
+				}
 				if(player.getPlayer().getLocation().getBlockY() <= y) killPlayer(player);
 				this.checkWin();
 			}
@@ -156,6 +189,9 @@ public class SpleggHandler extends Updateable{
 	public void killPlayer(PlayerData data){
 		Player player = data.getPlayer();		
 		player.setGameMode(GameMode.CREATIVE);
+		player.teleport(mid);
+		player.setFallDistance(0);
+		player.setFlying(true);
 		//Bukkit.broadcastMessage(ChatColor.GOLD + player.getName() + ChatColor.GREEN + " Died");
 		sendMessage(this.getConfigMessage().getMessage(player, "game.playerDeath", this));
 		data.setDead(true);
@@ -247,7 +283,7 @@ public class SpleggHandler extends Updateable{
 			//player.getPlayer().playSound(player.getPlayer().getLocation(), Sound.NOTE_STICKS, 1f, 0.25f);
 			player.getPlayer().playSound(player.getPlayer().getLocation(), Sound.NOTE_PLING, 1f, 0.5f);
 
-			TitleAPI.sendFullTitle(player.getPlayer(), 0, 25, 10, title, "");
+			TitleAPI.sendFullTitle(player.getPlayer(), 0, 40, 10, title, "");
 		}
 	}
 	
@@ -299,12 +335,18 @@ public class SpleggHandler extends Updateable{
 			player.setGameMode(GameMode.CREATIVE);
 			player.teleport(mid);
 			data.setDead(true);
-			if(!players.contains(data)) players.add(data);			
+			if(!players.contains(data)) players.add(data);	
+			for(PlayerData p : players){
+				p.getPlayer().hidePlayer(player);
+			}
 		}
+		sendUpdate();
 	}
 	
 	public void playerQuit(Player player){
 		players.remove(PlayerData.getPlayerData(player));
+		sendUpdate();
+
 		if(gameState.equals(GameState.PREGAME)){
 			sendMessage(this.getConfigMessage().getMessage(player, "game.playerQuit", this));
 		}else if(!PlayerData.getPlayerData(player).isDead()){

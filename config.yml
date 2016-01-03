@@ -50,6 +50,10 @@ bungee:
   enabled: false
   kickEnabled: false
   kickServer: lobby
+  #SAME SERVER NAME AS IN BUNGEECORD CONFIG
+  serverName: 'server1'
+  #NOTE: FOR ADVANCED USERS ONLY
+  pluginChannel: 'spleggChannel'
 points:
   win: 370
   participation: 125

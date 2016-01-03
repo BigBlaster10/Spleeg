@@ -9,11 +9,13 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import main.java.org.trompgames.splegg.RankData.Rank;
 import main.java.org.trompgames.utils.Updateable;
+import net.md_5.bungee.api.ChatColor;
 
 public class PlayerData extends Updateable{
 
@@ -171,6 +173,7 @@ public class PlayerData extends Updateable{
 		}
 		
 		private void loadStats(){
+			if(conn == null) return;
 			String query = "SELECT * FROM " + table + " WHERE PlayerUUID = '" + player.getUniqueId().toString() +  "'";
 			Statement stmt;			
 			ResultSet rs;
@@ -217,11 +220,14 @@ public class PlayerData extends Updateable{
 				conn = DriverManager.getConnection(url, user, pass);				
 				createTable(conn);
 			} catch (SQLException e1) {
+				Bukkit.broadcastMessage(ChatColor.RED + "[Splegg] ERROR: Failed to connect with mysql");
 				e1.printStackTrace();
 			}
 		}		
 		
-		private static void updatePlayerName(Player player){		
+		private static void updatePlayerName(Player player){	
+			if(conn == null) return;
+
 			String query = "UPDATE " + table + " SET PlayerName = '" + player.getName() + "' WHERE PlayerUUID = '" + player.getUniqueId().toString() + "';";
 			try {
 				PreparedStatement pStmt = conn.prepareStatement(query);
@@ -233,6 +239,8 @@ public class PlayerData extends Updateable{
 		}	
 		
 		private static void createTable(Connection conn){
+			if(conn == null) return;
+
 			String create = "CREATE TABLE IF NOT EXISTS `" + table + "` (`PlayerName` VARCHAR(30) NULL,`PlayerUUID` VARCHAR(45) NULL,`Wins` INT NULL,`GamesPlayed` INT NULL,`EggsShot` INT NULL, `BlocksDestroyed` INT NULL,`Points` INT NULL,`Deaths` INT NULL);";
 			try {
 				PreparedStatement pStmt = conn.prepareStatement(create);
@@ -244,7 +252,9 @@ public class PlayerData extends Updateable{
 			
 		}
 		
-		public static void saveStats(){			
+		public static void saveStats(){		
+			if(conn == null) return;
+
 			for(PlayerStats ps : stats){
 				ps.loadStats();
 				

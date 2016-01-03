@@ -5,7 +5,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import main.java.org.trompgames.utils.MapVote;
-import main.java.org.trompgames.utils.SpleggMap;
 import net.md_5.bungee.api.ChatColor;
 
 public class ConfigMessage {
