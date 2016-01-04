@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Effect;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
@@ -153,7 +155,52 @@ public class SpleggListener implements Listener {
         block.setType(Material.AIR);
         block.getLocation().getWorld().playSound(block.getLocation(), Sound.CHICKEN_EGG_POP, 0.5f, 1f);
 
+        
+        if(mat.equals(Material.TNT)){
+        	
+        	createExplosion(block.getLocation());
+        	
+        	
+        	
+        }
+        
     }
+    
+    
+    public void createExplosion(Location loc){
+    	
+    	Bukkit.getScheduler().scheduleSyncDelayedTask(spleggMain, new Runnable(){
+
+			@Override
+			public void run() {
+				loc.getBlock().setType(Material.AIR);
+		    	loc.getWorld().createExplosion(loc, 0);
+		    	
+
+		    	for(int x = loc.getBlockX() - 1; x <= loc.getBlockX() + 1; x++){
+		        	for(int y = loc.getBlockY() - 1; y <= loc.getBlockY() + 1; y++){
+		            	for(int z = loc.getBlockZ() - 1; z <= loc.getBlockZ() + 1; z++){
+		            		Location newLoc = new Location(loc.getWorld(), x, y, z);
+		            		
+		            		newLoc.getWorld().spigot().playEffect(loc, Effect.CLOUD, 0, 0, 0, 0, 0, .25f, 3, 100);
+		            		newLoc.getWorld().spigot().playEffect(loc, Effect.EXPLOSION, 0, 0, 0, 0, 0, .25f, 5, 100);
+		            		
+		            		
+		            		if(newLoc.getBlock().getType().equals(Material.TNT)){
+		            			createExplosion(newLoc);
+		            			continue;
+		            		}
+		            		newLoc.getBlock().setType(Material.AIR);           		
+		            	}
+		        	}
+		    	}
+			}    		
+    	}, 1L);
+    	
+    	
+    	
+    }
+    
 
     
     

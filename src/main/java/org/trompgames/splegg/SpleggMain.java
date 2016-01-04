@@ -12,6 +12,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 
 import main.java.org.trompgames.splegg.PlayerData.PlayerStats;
@@ -207,7 +209,15 @@ arena:
             	}            	
             	
             	handler.playerVote(player, number);            	
-            }            	
+            }          
+            if (cmd.getName().equalsIgnoreCase("splegg") && args.length >= 1 && args[0].equals("leave")) {
+            	ByteArrayDataOutput out = ByteStreams.newDataOutput();
+	            out.writeUTF("Connect");
+	            out.writeUTF(this.getConfig().getString("bungee.kickServer")); 
+	            player.sendPluginMessage(this, "BungeeCord", out.toByteArray()); 	
+            	return true;
+            }
+
             if (!player.isOp()) return false;
       
                 //Schematic.loadArea(world, new File("plugins\\WorldEdit\\schematics\\" + schem + ".schematic"), player.getLocation(), true);
@@ -215,7 +225,7 @@ arena:
     			if(args.length == 0 || (args.length >= 1 && args[0].equals("help"))){
     				spleggHelp(player);
     				return false;
-    			}
+    		}
     			
     			switch(args[0].toLowerCase()){
     			

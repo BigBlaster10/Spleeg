@@ -17,7 +17,7 @@ import net.md_5.bungee.api.ChatColor;
 public class Schematic {
 
 	public static void loadArea(SpleggMain plugin, World world, File file, Location loc, boolean withAir){
-		EditSession session = plugin.getWorldEdit().getWorldEdit().getEditSessionFactory().getEditSession(new BukkitWorld(world), 1000000);
+		EditSession session = plugin.getWorldEdit().getWorldEdit().getEditSessionFactory().getEditSession(new BukkitWorld(world), 1000000000);
 	    session.enableQueue();
 		try {
 	        MCEditSchematicFormat.getFormat(file).load(file).paste(session, new Vector(loc.getX(), loc.getY(), loc.getZ()), !withAir);
@@ -25,7 +25,6 @@ public class Schematic {
 			//Bukkit.broadcastMessage(ChatColor.DARK_RED + "" +  ChatColor.BOLD + "Error: " + ChatColor.RED + "Failed to paste schematic: " + file.getName());
 	    	System.out.println(ChatColor.DARK_RED + "" +  ChatColor.BOLD + "Error: " + ChatColor.RED + "Failed to paste schematic: " + file.getName());
 	    	System.out.println("99% of the time this is fine");
-	        //e.printStackTrace();
 	    }
 		session.flushQueue();	   
 	}

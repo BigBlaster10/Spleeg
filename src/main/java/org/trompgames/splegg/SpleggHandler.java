@@ -31,12 +31,12 @@ import main.java.org.trompgames.utils.Updateable;
 public class SpleggHandler extends Updateable{
 
 	public static int minPlayers = 2;
-	public static int maxPlayers = 8;	
+	public static int maxPlayers = 24;	
 	
 	private GameState gameState = GameState.PREGAME;
 	
-	private final int COUNTDOWNSECONDS = 20;
-	private int preGameSeconds = COUNTDOWNSECONDS;
+	private final int COUNTDOWNSECONDS;
+	private int preGameSeconds;
 	
 	private final int INGAMECOUNTDOWN = 5;
 	private int inGameCountdown = INGAMECOUNTDOWN;
@@ -99,7 +99,7 @@ public class SpleggHandler extends Updateable{
 		for(PlayerData data : players){
 			spleggScoreboard.addPlayer(data.getPlayer());
 		}
-		Schematic.loadArea(plugin, world, new File("plugins/WorldEdit/schematics/clear.schematic"), mid, true);
+		clear();
 	}
 	
 	
@@ -125,6 +125,23 @@ public class SpleggHandler extends Updateable{
 		}				
 	}
 	
+	private void clear(){
+		int radius = 50;
+		for(int x = mid.getBlockX() - radius; x <= mid.getBlockX() + radius; x++){
+			for(int y = mid.getBlockY() - 75; y <= mid.getBlockY() + 100; y++){
+				for(int z = mid.getBlockZ() - radius; z <= mid.getBlockZ() + radius; z++){
+					Location loc = new Location(world, x, y, z);
+					if(!loc.getBlock().getType().equals(Material.AIR)){
+						loc.getBlock().setType(Material.AIR);
+					}
+				}
+			}
+				
+		}
+		
+		
+	}
+	
 	protected SpleggHandler(Location lobbyLocation, Location mid, double y, String configName, FileConfiguration config, SpleggMain plugin, ConfigMessage configMessage){
 		super(1);
 		this.lobbyLocation = lobbyLocation;
@@ -137,7 +154,15 @@ public class SpleggHandler extends Updateable{
 		this.configMessage = configMessage;
 		this.spleggScoreboard = new PreGameScoreboard(this, configMessage);
 		this.configName = configName;
-		Schematic.loadArea(plugin, world, new File("plugins/WorldEdit/schematics/clear.schematic"), mid, true);
+		minPlayers = config.getInt("game.minPlayers");
+		maxPlayers = config.getInt("game.maxPlayers");
+		this.COUNTDOWNSECONDS = config.getInt("game.pregameTime");
+		this.preGameSeconds = this.COUNTDOWNSECONDS;
+		
+		
+		clear();
+
+		//Schematic.loadArea(plugin, world, new File("plugins/WorldEdit/schematics/clear.schematic"), mid, true);
 		handlers.add(this);
 	}
 
