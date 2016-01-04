@@ -29,7 +29,7 @@ public class SpleggMap {
 	}
 	
 	public void loadMap(SpleggMain plugin, Location loc){
-		Schematic.loadArea(plugin, world, file, loc, true);
+		Schematic.loadArea(plugin, world, file, loc, false);
 	}	
 	
 	public String getMapName(){

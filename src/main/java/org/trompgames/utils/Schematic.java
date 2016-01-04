@@ -17,7 +17,7 @@ import net.md_5.bungee.api.ChatColor;
 public class Schematic {
 
 	public static void loadArea(SpleggMain plugin, World world, File file, Location loc, boolean withAir){
-		EditSession session = plugin.getWorldEdit().getWorldEdit().getEditSessionFactory().getEditSession(new BukkitWorld(world), 1000000000);
+		EditSession session = plugin.getWorldEdit().getWorldEdit().getEditSessionFactory().getEditSession(new BukkitWorld(world), 10000000);
 	    session.enableQueue();
 		try {
 	        MCEditSchematicFormat.getFormat(file).load(file).paste(session, new Vector(loc.getX(), loc.getY(), loc.getZ()), !withAir);
