@@ -126,9 +126,9 @@ public class SpleggHandler extends Updateable{
 	}
 	
 	private void clear(){
-		int radius = 50;
+		int radius = 100;
 		for(int x = mid.getBlockX() - radius; x <= mid.getBlockX() + radius; x++){
-			for(int y = mid.getBlockY() - 75; y <= mid.getBlockY() + 100; y++){
+			for(int y = 0; y <= 200; y++){
 				for(int z = mid.getBlockZ() - radius; z <= mid.getBlockZ() + radius; z++){
 					Location loc = new Location(world, x, y, z);
 					if(!loc.getBlock().getType().equals(Material.AIR)){
