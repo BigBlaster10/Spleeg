@@ -137,7 +137,7 @@ public class SpleggMap {
 		
 		public void loadMap(World world, Location origin, SpleggMain plugin){		
 			long time = System.currentTimeMillis();
-			repeat(plugin, (ArrayList<MapBlock>) mapBlocks.clone(), world, origin, 35, 1L);			
+			repeat(plugin, (ArrayList<MapBlock>) mapBlocks.clone(), world, origin, mapBlocks.size()/180, 1L);			
 		}
 		
 		/*

@@ -116,8 +116,12 @@ public class SpleggHandler extends Updateable{
 			out.writeInt(getPlayers().size());
 			out.writeInt(getMaxPlayers());
 			out.writeUTF(getGameState().toString());
-			out.writeUTF("Voting...");
 			
+			if(this.map == null){
+				out.writeUTF("Voting...");
+			}else{
+				out.writeUTF(map.getMapName());
+			}
 			Bukkit.getOnlinePlayers().iterator().next().sendPluginMessage(plugin, config.getString("bungee.pluginChannel"), out.toByteArray());
 		}catch(Exception e){
 			Bukkit.broadcastMessage("[Splegg] error -.-");
@@ -170,6 +174,7 @@ public class SpleggHandler extends Updateable{
 	@Override
 	protected void update() {
 		ticks++;
+		if(ticks % 5 == 0) sendUpdate();
 		if(gameState.equals(GameState.PREGAME) && ticks == 20) preGameUpdate();
 		else if(gameState.equals(GameState.INGAME) && ticks == 20) inGameUpdate();
 		if(gameState.equals(GameState.INGAME)){
