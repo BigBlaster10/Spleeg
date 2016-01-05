@@ -19,6 +19,7 @@ import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import main.java.org.trompgames.splegg.PlayerData.PlayerStats;
 import main.java.org.trompgames.utils.BungeePing;
 import main.java.org.trompgames.utils.MapVote;
+import main.java.org.trompgames.utils.SpleggMap.Map;
 import main.java.org.trompgames.utils.Updateable;
 import net.md_5.bungee.api.ChatColor;
 
@@ -242,7 +243,7 @@ arena:
     				return true;
     			case "points":
     				PlayerData.getPlayerData(player).getPlayerStats().addPoints(Integer.parseInt(args[1]));
-    				PlayerStats.saveStats();
+    				PlayerStats.saveStats(this.getConfig());
     				return true;    			
     			case "maps":
     				
@@ -322,6 +323,15 @@ arena:
     					spleggHelp(player);
     					return false;
     				}
+    				
+    				if(we.getSelection(player) == null || we.getSelection(player).getMinimumPoint() == null || we.getSelection(player).getMaximumPoint() == null){
+    					
+    					player.sendMessage(ChatColor.DARK_RED + "" + ChatColor.BOLD + "Error: " + ChatColor.RED + " Please make a WorldEdit selection");
+    					return false;
+    				}
+    				
+    				Map.createMap(player, we, args[2]);
+    				
     				createMap(args[1], args[2]);
     				player.sendMessage(ChatColor.GREEN + "Created map " + ChatColor.GOLD + args[1] + ChatColor.GREEN + " with the schematic " + ChatColor.GOLD + args[2]);
     				//player.sendMessage(ChatColor.GREEN + "To finish creating the map use /splegg setSpawn");

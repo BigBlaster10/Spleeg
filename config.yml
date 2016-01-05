@@ -4,6 +4,8 @@ game:
   minPlayers: 2
   maxPlayers: 24
   pregameTime: 20
+  participationGems: 10
+  winGems: 100
   playerJoin: '&a\u27A3 &6%player% &ahas joined. &7[&6%players%/%maxPlayers%&7]'
   playerQuit: '&c\u2718 &6%player% &ahas left. &7[&6%players%/%maxPlayers%&7]'
   playerWinTitle: '&6&l%player% &aHas Won!'

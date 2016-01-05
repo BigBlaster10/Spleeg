@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
+import SpookyMC.com.gemsMySQL.main.Main;
 import main.java.org.trompgames.splegg.RankData.Rank;
 import main.java.org.trompgames.utils.Updateable;
 import net.md_5.bungee.api.ChatColor;
@@ -252,7 +253,7 @@ public class PlayerData extends Updateable{
 			
 		}
 		
-		public static void saveStats(){		
+		public static void saveStats(FileConfiguration config){		
 			if(conn == null) return;
 
 			for(PlayerStats ps : stats){
@@ -277,6 +278,14 @@ public class PlayerData extends Updateable{
 						e.printStackTrace();
 					}					
 				}
+				
+				if(ps.getWins() >= 1){
+					Main.giveGems(ps.getPlayer(), config.getInt("game.winGems"));
+				}else{
+					Main.giveGems(ps.getPlayer(), config.getInt("game.participationGems"));
+				}
+				
+				
 				
 			}
 			

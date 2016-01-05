@@ -65,7 +65,7 @@ public class SpleggHandler extends Updateable{
 	
 	public void restart(){
 		sendMessage(this.configMessage.getMessage("game.gameRestart", this));
-		PlayerStats.saveStats();
+		PlayerStats.saveStats(config);
 		gameState = GameState.PREGAME;
 		this.mapVote = new MapVote(config, configMessage, this);
 
@@ -247,6 +247,12 @@ public class SpleggHandler extends Updateable{
 		if(preGameSeconds == 30 || preGameSeconds <= 10)
 			sendStartingMessage();			
 		preGameSeconds--;
+		
+		for(PlayerData data : players){
+			//data.getPlayer().setLevel(preGameSeconds);
+		}
+		
+		
 		if(preGameSeconds < 0) startGame();
 	}
 	
