@@ -162,7 +162,7 @@ public class SpleggMap {
 				public void run() {
 					int blockSize = blocks.size();
 					for(int i = blocks.size()-1; i >= blockSize - amount; i--){
-						if(i == 0) continue;
+						if(i <= 0) continue;
 						MapBlock block = blocks.get(i);
 						
 						Location loc = new Location(world, block.getX(), block.getY(), block.getZ());

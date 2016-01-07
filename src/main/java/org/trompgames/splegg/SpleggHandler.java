@@ -249,13 +249,16 @@ public class SpleggHandler extends Updateable{
 
 			//Bukkit.broadcastMessage(ChatColor.GREEN + "The map " + ChatColor.GOLD + map.getMapName() + ChatColor.GREEN + " has been selected!");
 		}
+		
+		for(PlayerData data : players){
+			data.getPlayer().setLevel(preGameSeconds);
+		}
+		
 		if(preGameSeconds == 30 || preGameSeconds <= 10)
 			sendStartingMessage();			
 		preGameSeconds--;
 		
-		for(PlayerData data : players){
-			//data.getPlayer().setLevel(preGameSeconds);
-		}
+		
 		
 		
 		if(preGameSeconds < 0) startGame();

@@ -111,6 +111,7 @@ public class SpleggMain extends JavaPlugin {
         
         
         Bukkit.getServer().getPluginManager().registerEvents(new SpleggListener(this, configMessage), this);
+        Bukkit.getServer().getPluginManager().registerEvents(new Launcher(this, this.getConfig()), this);
 
         Bukkit.broadcastMessage(ChatColor.AQUA + "Splegg Initialized...");
 
